@@ -33,6 +33,9 @@ public class Account {
     private AccountStatus status = AccountStatus.ACTIVE;
 
     @Column(nullable = false)
+    private BigDecimal accountLimit;
+
+    @Column(nullable = false)
     private LocalDateTime openingDate;
 
     @ManyToOne(fetch = FetchType.LAZY)

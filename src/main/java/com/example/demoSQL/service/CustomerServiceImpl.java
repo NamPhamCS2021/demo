@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class CustomerServiceImpl {
+public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
@@ -24,6 +24,7 @@ public class CustomerServiceImpl {
         this.customerRepository = customerRepository;
     }
 
+    @Override
     public CustomerResponseDTO createCustomer(CustomerCreateDTO customerCreateDTO){
         if(customerRepository.existsByEmail(customerCreateDTO.getEmail()) ||
         customerRepository.existsByPhoneNumber(customerCreateDTO.getPhoneNumber())){
@@ -41,6 +42,7 @@ public class CustomerServiceImpl {
         return toCustomerResponse(customer);
     }
 
+    @Override
     public CustomerResponseDTO updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
         Customer existingCustomer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
 
@@ -62,17 +64,23 @@ public class CustomerServiceImpl {
 //        later
         return toCustomerResponse(updatedCustomer);
     }
+
+    @Override
     @Transactional(readOnly = true)
     public CustomerResponseDTO getCustomerById(Long id){
         Customer customer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
         return toCustomerResponse(customer);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Page<CustomerSummaryDTO> getAll(Pageable pageable){
         Page<Customer> customerPage = customerRepository.findAll(pageable);
         return customerPage.map(this::toCustomerSummaryDTO);
     }
+
+
+
     //helper
     private CustomerResponseDTO toCustomerResponse(Customer customer){
         return CustomerResponseDTO.builder().id(customer.getId())

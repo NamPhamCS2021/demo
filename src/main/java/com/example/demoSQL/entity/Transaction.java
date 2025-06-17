@@ -41,6 +41,9 @@ public class Transaction {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
+    @Column(nullable = false)
+    private String location;
+
     @PrePersist
     public void initialiseTransaction() {
         this.timestamp = LocalDateTime.now();

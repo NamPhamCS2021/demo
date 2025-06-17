@@ -15,6 +15,7 @@ public class AccountResponseDTO {
     private String accountNumber;
     private AccountStatus status;
     private BigDecimal balance;
+    private BigDecimal limit;
     private LocalDateTime openingDate;
     private String customerName;
 }

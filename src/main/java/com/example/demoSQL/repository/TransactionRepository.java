@@ -1,5 +1,6 @@
 package com.example.demoSQL.repository;
 
+import com.example.demoSQL.Utils.LocationCount;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.TransactionType;
 import org.springframework.data.domain.Page;
@@ -17,4 +18,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Page<Transaction> findByType(TransactionType type, Pageable pageable);
     Page<Transaction> findByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
     Page<Transaction> findByReceiverId(Long receiverId, Pageable pageable);
+    @Query("SELECT t.location AS location, COUNT(t) AS count FROM Transaction t GROUP BY t.location")
+    List<LocationCount> countTransactionsByLocation();
 }

@@ -1,9 +1,11 @@
 package com.example.demoSQL.service;
 
+import com.example.demoSQL.Utils.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Transaction;
+import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.TransactionRepository;
@@ -13,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.xml.stream.Location;
+import java.util.List;
 
 
 @Service
@@ -32,6 +37,11 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionResponseDTO deposit(TransactionCreateDTO transactionCreateDTO) {
         Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
 
+
+        if(account.getStatus() != AccountStatus.ACTIVE){
+            throw new RuntimeException("Account is not active");
+        }
+
         Transaction transaction = new Transaction();
         transaction.setAccount(account);
         transaction.setAmount(transactionCreateDTO.getAmount());
@@ -46,10 +56,17 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionResponseDTO withdraw(TransactionCreateDTO transactionCreateDTO) {
         Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
 
+        if(account.getStatus() != AccountStatus.ACTIVE){
+            throw new RuntimeException("Account is not active");
+        }
 
         if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
             throw new RuntimeException("Insufficient balance");
         }
+        if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
+            throw new RuntimeException("Transaction limit exceeded");
+        }
+
         Transaction transaction = new Transaction();
         transaction.setAccount(account);
         transaction.setAmount(transactionCreateDTO.getAmount());
@@ -68,6 +85,14 @@ public class TransactionServiceImpl implements TransactionService {
         if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
             throw new RuntimeException("Insufficient balance");
         }
+        if(account.getStatus() != AccountStatus.ACTIVE){
+            throw new RuntimeException("Account is not active");
+        }
+
+        if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
+            throw new RuntimeException("Transaction limit exceeded");
+        }
+
         Transaction transaction = new Transaction();
         transaction.setAccount(account);
         transaction.setAmount(transactionCreateDTO.getAmount());
@@ -105,6 +130,11 @@ public class TransactionServiceImpl implements TransactionService {
     {
         Page<Transaction> transactions = transactionRepository.findByAccountIdAndType(accountId, type, pageable);
         return transactions.map(this::toTransactionResponseDTO);
+    }
+
+    @Override
+    public List<LocationCount> countTransactionsByLocation(){
+        return transactionRepository.countTransactionsByLocation();
     }
 
     //helper

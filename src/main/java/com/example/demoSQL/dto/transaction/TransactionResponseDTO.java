@@ -16,4 +16,5 @@ public class TransactionResponseDTO {
     private BigDecimal amount;
     private TransactionType type;
     private LocalDateTime timestamp;
+    private String location;
 }

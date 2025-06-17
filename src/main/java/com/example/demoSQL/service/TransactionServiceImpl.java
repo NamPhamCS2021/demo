@@ -107,7 +107,7 @@ public class TransactionServiceImpl implements TransactionService {
         return transactions.map(this::toTransactionResponseDTO);
     }
 
-    //helpa
+    //helper
     private TransactionResponseDTO toTransactionResponseDTO(Transaction transaction){
         return TransactionResponseDTO.builder()
                 .customerId(transaction.getAccount().getCustomer().getId())

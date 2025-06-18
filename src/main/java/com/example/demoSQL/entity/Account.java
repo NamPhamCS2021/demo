@@ -46,6 +46,8 @@ public class Account {
     private List<Transaction> transactions;
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<AccountStatusHistory> accountStatusHistory;
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<PeriodicallyPayment> periodicallyPayments;
 
     @PrePersist
     public void initialiseAccount() {

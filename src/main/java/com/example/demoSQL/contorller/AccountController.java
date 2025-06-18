@@ -35,11 +35,16 @@ public class AccountController {
     }
 
     @PutMapping("status/{id}")
-    public ResponseEntity<AccountResponseDTO> updateAccount(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
+    public ResponseEntity<AccountResponseDTO> updateAccountStatus(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
         AccountResponseDTO updatedDTO = accountServiceImpl.updateAccountStatus(id, accountUpdateDTO);
         return ResponseEntity.ok(updatedDTO);
     }
 
+    @PutMapping("accountlimit/{id}")
+    public ResponseEntity<AccountResponseDTO> updateAccountLimit(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
+        AccountResponseDTO updatedDTO = accountServiceImpl.updateAccountLimit(id, accountUpdateDTO);
+        return ResponseEntity.ok(updatedDTO);
+    }
     @GetMapping("/{id}")
     public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id){
         AccountResponseDTO accountResponseDTO = accountServiceImpl.getAccountById(id);

@@ -10,6 +10,8 @@ import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @CachePut(value = "accountsbyCustomer", key = "#accountCreateDTO.customerId")
     public AccountResponseDTO createAccount(AccountCreateDTO accountCreateDTO) {
         Customer customer = customerRepository.findById(accountCreateDTO.getCustomerId()).orElseThrow(() -> new EntityNotFoundException("Customer with id " + accountCreateDTO.getCustomerId() + " not found"));
         Account account = new Account();
@@ -42,10 +45,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @CachePut(value = "accounts", key = "#id")
     public AccountResponseDTO updateAccountStatus(Long id, AccountUpdateDTO accountUpdate) {
         Account existingAccount = accountRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
-        if (accountUpdate.getStatus() != null || accountUpdate.getStatus() != existingAccount.getStatus()) {
+        if (accountUpdate.getStatus() != null && accountUpdate.getStatus() != existingAccount.getStatus()) {
             existingAccount.setStatus(accountUpdate.getStatus());
         }
         accountRepository.save(existingAccount);
@@ -54,10 +58,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @CachePut(value = "accounts", key = "#id")
     public AccountResponseDTO updateAccountLimit(Long id, AccountUpdateDTO accountUpdate) {
         Account existingAccount = accountRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
-        if (accountUpdate.getAccountLimit() != null || accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
+        if (accountUpdate.getAccountLimit() != null && accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
             existingAccount.setAccountLimit(accountUpdate.getAccountLimit());
         }
         accountRepository.save(existingAccount);
@@ -67,6 +72,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "accounts", key = "#id")
     public AccountResponseDTO getAccountById(Long id){
         Account account = accountRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Account with id "+id+" not found"));
         return toAccountResponseDTO(account);
@@ -74,6 +80,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "accounts", key = "#customerId")
     public Page<AccountResponseDTO> getAccountsByCustomer(Long customerId, Pageable pageable) {
         if(!customerRepository.existsById(customerId)){
             throw new EntityNotFoundException("Customer with id "+customerId+" not found");
@@ -84,6 +91,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "accounts")
     public Page<AccountResponseDTO> getAllAccounts(Pageable pageable) {
         Page<Account> accountPage = accountRepository.findAll(pageable);
         return accountPage.map(this::toAccountResponseDTO);
@@ -91,6 +99,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "accountsbyNumber", key = "#accountNumber")
     public AccountResponseDTO getAccountByAccountNumber(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(()->new EntityNotFoundException("Account with account number "+accountNumber+" not found"));
         return toAccountResponseDTO(account);
@@ -98,6 +107,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "accountsbyStatus", key = "#status")
     public Page<AccountResponseDTO> getAccountsByStatus(AccountStatus status, Pageable pageable) {
         Page<Account> accountPage = accountRepository.findByStatus(status, pageable);
         return accountPage.map(this::toAccountResponseDTO);
@@ -105,6 +115,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "accountsByCustomerandStatus", key = "#customerId + '-' + #status")
     public Page<AccountResponseDTO> getAccountsByCustomerAndStatus(Long customerId, AccountStatus status, Pageable pageable) {
         if(!customerRepository.existsById(customerId)){
             throw new EntityNotFoundException("Customer with id "+customerId+" not found");

@@ -11,6 +11,8 @@ import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,7 @@ public class TransactionServiceImpl implements TransactionService {
         this.accountRepository = accountRepository;
     }
     @Override
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
     public TransactionResponseDTO deposit(TransactionCreateDTO transactionCreateDTO) {
         Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
 
@@ -54,6 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
     public TransactionResponseDTO withdraw(TransactionCreateDTO transactionCreateDTO) {
         Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
 
@@ -80,6 +84,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
     public TransactionResponseDTO transfer(TransactionCreateDTO transactionCreateDTO){
         Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
         Account receiver = accountRepository.findById(transactionCreateDTO.getReceiverId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getReceiverId()+" not found"));
@@ -109,12 +114,16 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "transactions", key = "#id")
     public TransactionResponseDTO getTransaction(Long id){
         Transaction transaction = transactionRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Transaction with id "+id+" not found"));
         return toTransactionResponseDTO(transaction);
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "transactionsByAccount", key = "#accountId")
     public Page<TransactionResponseDTO> getTransactionsByAccountId(Long accountId, Pageable pageable)
     {
         Page<Transaction> transactions = transactionRepository.findByAccountId(accountId, pageable);
@@ -122,6 +131,8 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "transactionsByType", key = "#type")
     public Page<TransactionResponseDTO> getTransactionsByType(TransactionType type, Pageable pageable)
     {
         Page<Transaction> transactions = transactionRepository.findByType(type, pageable);
@@ -129,6 +140,8 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "transactionsByAccountAndType", key = "#accountId + '-' + #type")
     public Page<TransactionResponseDTO> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable)
     {
         Page<Transaction> transactions = transactionRepository.findByAccountIdAndType(accountId, type, pageable);
@@ -136,6 +149,8 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "transactionsByLocation", key = "#location")
     public List<LocationCount> countTransactionsByLocation(){
         return transactionRepository.countTransactionsByLocation();
     }

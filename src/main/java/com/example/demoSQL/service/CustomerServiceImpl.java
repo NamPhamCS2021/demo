@@ -9,6 +9,8 @@ import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.repository.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @CachePut(value = "customersByEmail", key = "#customerCreateDTO.email")
     public CustomerResponseDTO createCustomer(CustomerCreateDTO customerCreateDTO){
         if(customerRepository.existsByEmail(customerCreateDTO.getEmail()) ||
         customerRepository.existsByPhoneNumber(customerCreateDTO.getPhoneNumber())){
@@ -43,6 +46,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    @CachePut(value = "customersByEmail", key = "#customerUpdateDTO.email")
     public CustomerResponseDTO updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
         Customer existingCustomer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
 
@@ -67,6 +71,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "customers", key = "#id")
     public CustomerResponseDTO getCustomerById(Long id){
         Customer customer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
         return toCustomerResponse(customer);
@@ -74,6 +79,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "customers")
     public Page<CustomerSummaryDTO> getAll(Pageable pageable){
         Page<Customer> customerPage = customerRepository.findAll(pageable);
         return customerPage.map(this::toCustomerSummaryDTO);

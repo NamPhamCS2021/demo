@@ -19,4 +19,6 @@ public class TransactionCreateDTO {
     private Long receiverId;
     @PositiveOrZero
     private BigDecimal amount;
+    @NotNull
+    private String location;
 }

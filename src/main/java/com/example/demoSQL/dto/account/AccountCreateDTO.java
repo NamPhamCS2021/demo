@@ -11,5 +11,5 @@ import java.math.BigDecimal;
 @Builder
 public class AccountCreateDTO {
     private Long customerId;
-    private BigDecimal limit;
+    private BigDecimal accountLimit;
 }

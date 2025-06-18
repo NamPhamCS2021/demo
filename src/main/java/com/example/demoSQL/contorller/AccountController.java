@@ -34,9 +34,9 @@ public class AccountController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDTO);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("status/{id}")
     public ResponseEntity<AccountResponseDTO> updateAccount(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
-        AccountResponseDTO updatedDTO = accountServiceImpl.updateAccount(id, accountUpdateDTO);
+        AccountResponseDTO updatedDTO = accountServiceImpl.updateAccountStatus(id, accountUpdateDTO);
         return ResponseEntity.ok(updatedDTO);
     }
 

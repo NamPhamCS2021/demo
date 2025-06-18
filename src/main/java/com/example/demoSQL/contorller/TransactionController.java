@@ -1,6 +1,7 @@
 package com.example.demoSQL.contorller;
 
 
+import com.example.demoSQL.Utils.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.enums.TransactionType;
@@ -14,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -71,5 +74,10 @@ public class TransactionController {
                                                                              @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
         Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByAccountIdAndType(accountId, type, pageable);
         return ResponseEntity.ok(transactions);
+    }
+
+    @GetMapping("locationcount")
+    public List<LocationCount> countTransactionsByLocation(){
+        return transactionService.countTransactionsByLocation();
     }
 }

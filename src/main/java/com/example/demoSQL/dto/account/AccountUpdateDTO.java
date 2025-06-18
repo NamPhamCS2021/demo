@@ -12,5 +12,5 @@ import java.math.BigDecimal;
 @Builder
 public class AccountUpdateDTO {
     private AccountStatus status;
-    private BigDecimal limit;
+    private BigDecimal accountLimit;
 }

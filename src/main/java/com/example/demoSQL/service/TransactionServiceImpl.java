@@ -46,6 +46,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setAccount(account);
         transaction.setAmount(transactionCreateDTO.getAmount());
         transaction.setType(TransactionType.DEPOSIT);
+        transaction.setLocation(transactionCreateDTO.getLocation());
 
         account.setBalance(account.getBalance().add(transactionCreateDTO.getAmount()));
         transactionRepository.save(transaction);
@@ -71,6 +72,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setAccount(account);
         transaction.setAmount(transactionCreateDTO.getAmount());
         transaction.setType(TransactionType.WITHDRAWAL);
+        transaction.setLocation(transactionCreateDTO.getLocation());
 
         account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
         transactionRepository.save(transaction);
@@ -98,6 +100,7 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setAmount(transactionCreateDTO.getAmount());
         transaction.setType(TransactionType.TRANSFER);
         transaction.setReceiver(receiver);
+        transaction.setLocation(transactionCreateDTO.getLocation());
 
         account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
         receiver.setBalance(receiver.getBalance().add(transactionCreateDTO.getAmount()));
@@ -145,6 +148,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .amount(transaction.getAmount())
                 .type(transaction.getType())
                 .timestamp(transaction.getTimestamp())
+                .location(transaction.getLocation())
                 .build();
     }
 }

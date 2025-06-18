@@ -9,7 +9,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface AccountService {
     AccountResponseDTO createAccount(AccountCreateDTO accountCreateDTO);
-    AccountResponseDTO updateAccount(Long id, AccountUpdateDTO accountUpdate);
+    AccountResponseDTO updateAccountStatus(Long id, AccountUpdateDTO accountUpdate);
+    AccountResponseDTO updateAccountLimit(Long id, AccountUpdateDTO accountUpdate);
     AccountResponseDTO getAccountById(Long id);
     Page<AccountResponseDTO> getAccountsByCustomer(Long customerId, Pageable pageable);
     Page<AccountResponseDTO> getAllAccounts(Pageable pageable);

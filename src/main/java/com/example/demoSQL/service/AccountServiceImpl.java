@@ -35,13 +35,14 @@ public class AccountServiceImpl implements AccountService {
         Customer customer = customerRepository.findById(accountCreateDTO.getCustomerId()).orElseThrow(() -> new EntityNotFoundException("Customer with id " + accountCreateDTO.getCustomerId() + " not found"));
         Account account = new Account();
         account.setCustomer(customer);
+        account.setAccountLimit(accountCreateDTO.getAccountLimit());
         accountRepository.save(account);
 
         return toAccountResponseDTO(account);
     }
 
     @Override
-    public AccountResponseDTO updateAccount(Long id, AccountUpdateDTO accountUpdate) {
+    public AccountResponseDTO updateAccountStatus(Long id, AccountUpdateDTO accountUpdate) {
         Account existingAccount = accountRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
         if (accountUpdate.getStatus() != null || accountUpdate.getStatus() != existingAccount.getStatus()) {
@@ -51,6 +52,18 @@ public class AccountServiceImpl implements AccountService {
 
         return toAccountResponseDTO(existingAccount);
     }
+
+    @Override
+    public AccountResponseDTO updateAccountLimit(Long id, AccountUpdateDTO accountUpdate) {
+        Account existingAccount = accountRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
+        if (accountUpdate.getAccountLimit() != null || accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
+            existingAccount.setAccountLimit(accountUpdate.getAccountLimit());
+        }
+        accountRepository.save(existingAccount);
+        return toAccountResponseDTO(existingAccount);
+    }
+
 
     @Override
     @Transactional(readOnly = true)
@@ -106,6 +119,7 @@ public class AccountServiceImpl implements AccountService {
                 .accountNumber(account.getAccountNumber())
                 .balance(account.getBalance())
                 .status(account.getStatus())
+                .accountLimit(account.getAccountLimit())
                 .openingDate(account.getOpeningDate())
                 .customerName(account.getCustomer().getFirstName() + " " + account.getCustomer().getLastName()).build();
     }

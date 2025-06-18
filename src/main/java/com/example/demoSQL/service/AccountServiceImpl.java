@@ -4,9 +4,11 @@ import com.example.demoSQL.dto.account.AccountCreateDTO;
 import com.example.demoSQL.dto.account.AccountResponseDTO;
 import com.example.demoSQL.dto.account.AccountUpdateDTO;
 import com.example.demoSQL.entity.Account;
+import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.repository.AccountRepository;
+import com.example.demoSQL.repository.AccountStatusHistoryRepository;
 import com.example.demoSQL.repository.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +29,13 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private CustomerRepository customerRepository;
 
+    @Autowired
+    private AccountStatusHistoryRepository accountStatusHistoryRepository;
+
     public AccountServiceImpl(AccountRepository accountRepository, CustomerRepository customerRepository) {
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
+        this.accountStatusHistoryRepository = accountStatusHistoryRepository;
     }
 
     @Override
@@ -52,6 +58,11 @@ public class AccountServiceImpl implements AccountService {
         if (accountUpdate.getStatus() != null && accountUpdate.getStatus() != existingAccount.getStatus()) {
             existingAccount.setStatus(accountUpdate.getStatus());
         }
+
+        AccountStatusHistory history = new AccountStatusHistory();
+        history.setAccount(existingAccount);
+        history.setStatus(existingAccount.getStatus());
+        accountStatusHistoryRepository.save(history);
         accountRepository.save(existingAccount);
 
         return toAccountResponseDTO(existingAccount);

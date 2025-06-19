@@ -1,6 +1,6 @@
 package com.example.demoSQL.service;
 
-import com.example.demoSQL.Utils.LocationCount;
+import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.entity.Account;
@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.xml.stream.Location;
 import java.util.List;
 
 

@@ -1,7 +1,7 @@
 package com.example.demoSQL.contorller;
 
 
-import com.example.demoSQL.Utils.LocationCount;
+import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.enums.TransactionType;

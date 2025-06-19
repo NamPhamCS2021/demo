@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "transaction")
@@ -43,6 +44,9 @@ public class Transaction {
 
     @Column(nullable = false)
     private String location;
+
+    @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Alert> alerts;
 
     @PrePersist
     public void initialiseTransaction() {

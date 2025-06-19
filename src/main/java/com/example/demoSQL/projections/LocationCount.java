@@ -1,4 +1,4 @@
-package com.example.demoSQL.Utils;
+package com.example.demoSQL.projections;
 
 public interface LocationCount {
     String getLocation();

@@ -1,7 +1,6 @@
 package com.example.demoSQL.repository;
 
-import com.example.demoSQL.Utils.LocationCount;
-import com.example.demoSQL.entity.Account;
+import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.TransactionType;
 import org.springframework.data.domain.Page;

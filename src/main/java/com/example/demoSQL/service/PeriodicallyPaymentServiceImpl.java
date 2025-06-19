@@ -92,7 +92,7 @@ public class PeriodicallyPaymentServiceImpl implements PeriodicallyPaymentServic
 
                 updateEndedAt(payment);
                 Account account = payment.getAccount();
-                account.getBalance().subtract(payment.getAmount());
+                account.setBalance(account.getBalance().subtract(payment.getAmount()));
                 accountRepository.save(account);
                 periodicallyPaymentRepository.save(payment);
             }
@@ -109,13 +109,12 @@ public class PeriodicallyPaymentServiceImpl implements PeriodicallyPaymentServic
                 .startedAt(periodicallyPayment.getStartedAt())
                 .build();
     }
-    private PeriodicallyPayment updateEndedAt(PeriodicallyPayment periodicallyPayment) {
+    private void updateEndedAt(PeriodicallyPayment periodicallyPayment) {
         switch(periodicallyPayment.getPeriod()) {
             case WEEKLY -> periodicallyPayment.setEndedAt(LocalDateTime.now().plusWeeks(1));
             case MONTHLY -> periodicallyPayment.setEndedAt(LocalDateTime.now().plusMonths(1));
             case YEARLY -> periodicallyPayment.setEndedAt(LocalDateTime.now().plusYears(1));
             default -> throw new RuntimeException("Unexpected value: " + periodicallyPayment.getPeriod());
         }
-        return periodicallyPayment;
     }
 }

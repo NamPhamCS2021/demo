@@ -20,10 +20,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Page<Transaction> findByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
     //Page<Transaction> findByReceiverId(Long receiverId, Pageable pageable);
 
+    @Query("SELECT t FROM Transaction t WHERE t.checked = false")
+    List<Transaction> findByCheckedFalse();
+
     @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId AND t.timestamp BETWEEN :start AND :end")
-    Page<Transaction> findBetweenTimeByAccount(Long accountId, LocalDateTime start, LocalDateTime end, Pageable pageable);
+    List<Transaction> findBetweenTimeByAccount(Long accountId, LocalDateTime start, LocalDateTime end);
     @Query("SELECT t FROM Transaction t WHERE t.account.accountNumber = :accountNumber AND t.timestamp BETWEEN :start AND :end")
-    Page<Transaction> findBetweenTimeByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end, Pageable pageable);
+    List<Transaction> findBetweenTimeByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end);
 
     @Query("SELECT t.location AS location, COUNT(t) AS count FROM Transaction t GROUP BY t.location")
     List<LocationCount> countTransactionsByLocation();

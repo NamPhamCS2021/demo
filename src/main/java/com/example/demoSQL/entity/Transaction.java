@@ -25,7 +25,7 @@ public class Transaction {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,12 +45,16 @@ public class Transaction {
     @Column(nullable = false)
     private String location;
 
+    @Column(nullable = false)
+    private boolean checked;
+
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Alert> alerts;
 
     @PrePersist
     public void initialiseTransaction() {
+
+        this.checked = false;
         this.timestamp = LocalDateTime.now();
     }
-
 }

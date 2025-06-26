@@ -42,7 +42,6 @@ public class AuthServiceImpl implements AuthService {
     public ResponseEntity<AuthResponse> login(AuthRequest request) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         Date expirationTime = new Date();
-        expirationTime = expirationTime
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateJwtToken(authentication);
 

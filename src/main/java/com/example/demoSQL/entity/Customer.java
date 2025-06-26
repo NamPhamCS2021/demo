@@ -1,6 +1,7 @@
 package com.example.demoSQL.entity;
 
 
+import com.example.demoSQL.security.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -33,4 +34,7 @@ public class Customer {
 
     @OneToMany(mappedBy = "customer", cascade =CascadeType.ALL, fetch =FetchType.LAZY)
     private List<Account> accounts;
+
+    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, optional = true)
+    private User user;
 }

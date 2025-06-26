@@ -13,8 +13,8 @@ import java.util.Date;
 @AllArgsConstructor
 public class AuthResponse {
 
-    private String accessToken;
     private String token;
+    private String username;
     private String role;
     private Date expirationTime;
 }

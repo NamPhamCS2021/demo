@@ -2,7 +2,9 @@ package com.example.demoSQL.security.service;
 
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class UserServiceImpl implements UserService{
 
     private final UserRepository userRepository;

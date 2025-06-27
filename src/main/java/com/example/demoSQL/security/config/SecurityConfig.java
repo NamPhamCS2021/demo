@@ -6,6 +6,7 @@ import com.example.demoSQL.security.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -66,7 +67,21 @@ public class SecurityConfig {
             .exceptionHandling(exceptionHandler ->exceptionHandler.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                    .anyRequest().permitAll());
+                    .requestMatchers("/api/login").permitAll()
+                    .requestMatchers("swagger-config/**").permitAll()
+                    .requestMatchers("swagger-ui/**").permitAll()
+                    .requestMatchers("v3/api-docs/**").permitAll()
+                    .requestMatchers("swagger-ui.html").permitAll()
+                    .requestMatchers("swagger-resources/**").permitAll()
+                    .requestMatchers("webjars/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/customers").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/customers").hasRole("ADNIN")
+                    .requestMatchers("/api/customers/{id}").authenticated()
+                    .requestMatchers("/api/accounts/**").permitAll()
+                    .requestMatchers("/api/transactions/**").permitAll()
+                    .requestMatchers("/api/accountstatushistory/**").permitAll()
+                    .requestMatchers("/api/payments/**").permitAll()
+                    .anyRequest().authenticated());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

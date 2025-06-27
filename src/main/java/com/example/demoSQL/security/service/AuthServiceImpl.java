@@ -45,6 +45,16 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateJwtToken(authentication);
 
+        if (authentication != null) {
+            System.out.println("Principal: " + authentication.getPrincipal());
+            System.out.println("Authorities: " + authentication.getAuthorities());
+            System.out.println("Details: " + authentication.getDetails());
+            System.out.println("Authenticated: " + authentication.isAuthenticated());
+            System.out.println("Name: " + authentication.getName());
+        } else {
+            System.out.println("No authentication found in SecurityContextHolder.");
+        }
+
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
         String roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()).get(0);

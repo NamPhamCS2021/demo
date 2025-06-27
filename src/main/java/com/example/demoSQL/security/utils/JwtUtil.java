@@ -27,7 +27,7 @@ public class JwtUtil {
         return Jwts.builder().setSubject(userPrincipal.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(new Date().getTime() + jwtExpirationInMs))
-                .signWith(key(), SignatureAlgorithm.ES256).compact();
+                .signWith(key(), SignatureAlgorithm.HS256).compact();
     }
 
     private Key key() {

@@ -7,12 +7,15 @@ import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.repository.CustomerRepository;
+import com.example.demoSQL.security.entity.User;
+import com.example.demoSQL.security.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +25,16 @@ public class CustomerServiceImpl implements CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository) {
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public CustomerServiceImpl(CustomerRepository customerRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.customerRepository = customerRepository;
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -39,6 +50,13 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setLastName(customerCreateDTO.getLastName());
         customer.setEmail(customerCreateDTO.getEmail());
         customer.setPhoneNumber(customerCreateDTO.getPhoneNumber());
+
+        User user = new User();
+        user.setCustomer(customer);
+        user.setUsername(customerCreateDTO.getEmail());
+        user.setRole("USER");
+        user.setPassword(passwordEncoder.encode("123456"));
+        userRepository.save(user);
         customerRepository.save(customer);
 
 //        gotta do this later

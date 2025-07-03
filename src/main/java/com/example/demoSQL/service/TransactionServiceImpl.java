@@ -1,5 +1,7 @@
 package com.example.demoSQL.service;
 
+import com.example.demoSQL.dto.ApiResponse;
+import com.example.demoSQL.enums.ErrorMessage;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
@@ -10,7 +12,7 @@ import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.TransactionRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -23,135 +25,179 @@ import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
-    @Autowired
-    private TransactionRepository transactionRepository;
-    @Autowired
-    private AccountRepository accountRepository;
 
-    public TransactionServiceImpl(TransactionRepository transactionRepository, AccountRepository accountRepository) {
-        this.transactionRepository = transactionRepository;
-        this.accountRepository = accountRepository;
-    }
-    @Override
-    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    public TransactionResponseDTO deposit(TransactionCreateDTO transactionCreateDTO) {
-        Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
+    private final TransactionRepository transactionRepository;
 
-
-        if(account.getStatus() != AccountStatus.ACTIVE){
-            throw new RuntimeException("Account is not active");
-        }
-
-        Transaction transaction = new Transaction();
-        transaction.setAccount(account);
-        transaction.setAmount(transactionCreateDTO.getAmount());
-        transaction.setType(TransactionType.DEPOSIT);
-        transaction.setLocation(transactionCreateDTO.getLocation());
-
-        account.setBalance(account.getBalance().add(transactionCreateDTO.getAmount()));
-        transactionRepository.save(transaction);
-        return toTransactionResponseDTO(transaction);
-    }
+    private final AccountRepository accountRepository;
 
     @Override
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    public TransactionResponseDTO withdraw(TransactionCreateDTO transactionCreateDTO) {
-        Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
+    public ApiResponse<Object> deposit(TransactionCreateDTO transactionCreateDTO) {
+        try{
+            Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
 
-        if(account.getStatus() != AccountStatus.ACTIVE){
-            throw new RuntimeException("Account is not active");
+
+            if(account.getStatus() != AccountStatus.ACTIVE){
+                return new ApiResponse<>(ErrorMessage.INACTIVE.getCode(), ErrorMessage.INACTIVE.getMessage());
+            }
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setAmount(transactionCreateDTO.getAmount());
+            transaction.setType(TransactionType.DEPOSIT);
+            transaction.setLocation(transactionCreateDTO.getLocation());
+
+            account.setBalance(account.getBalance().add(transactionCreateDTO.getAmount()));
+            transactionRepository.save(transaction);
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch(EntityNotFoundException e) {
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+
+        } catch(Exception e){
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
         }
 
-        if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
-            throw new RuntimeException("Insufficient balance");
-        }
-        if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
-            throw new RuntimeException("Transaction limit exceeded");
-        }
-
-        Transaction transaction = new Transaction();
-        transaction.setAccount(account);
-        transaction.setAmount(transactionCreateDTO.getAmount());
-        transaction.setType(TransactionType.WITHDRAWAL);
-        transaction.setLocation(transactionCreateDTO.getLocation());
-
-        account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
-        transactionRepository.save(transaction);
-        return toTransactionResponseDTO(transaction);
     }
 
     @Override
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    public TransactionResponseDTO transfer(TransactionCreateDTO transactionCreateDTO){
-        Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
-        Account receiver = accountRepository.findById(transactionCreateDTO.getReceiverId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getReceiverId()+" not found"));
+    public ApiResponse<Object> withdraw(TransactionCreateDTO transactionCreateDTO) {
+        try{
+            Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
 
-        if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
-            throw new RuntimeException("Insufficient balance");
+            if(account.getStatus() != AccountStatus.ACTIVE){
+                return new ApiResponse<>(ErrorMessage.INACTIVE.getCode(), ErrorMessage.INACTIVE.getMessage());
+            }
+
+            if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ErrorMessage.INSUFFICIENT_BALANCE.getCode(), ErrorMessage.INSUFFICIENT_BALANCE.getMessage());
+            }
+            if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ErrorMessage.OFF_LIMIT.getCode(), ErrorMessage.OFF_LIMIT.getMessage());
+            }
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setAmount(transactionCreateDTO.getAmount());
+            transaction.setType(TransactionType.WITHDRAWAL);
+            transaction.setLocation(transactionCreateDTO.getLocation());
+
+            account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
+            transactionRepository.save(transaction);
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e) {
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
         }
-        if(account.getStatus() != AccountStatus.ACTIVE){
-            throw new RuntimeException("Account is not active");
+
+    }
+
+    @Override
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
+    public ApiResponse<Object> transfer(TransactionCreateDTO transactionCreateDTO){
+        try{
+            Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
+            Account receiver = accountRepository.findById(transactionCreateDTO.getReceiverId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getReceiverId()+" not found"));
+
+            if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ErrorMessage.INSUFFICIENT_BALANCE.getCode(), ErrorMessage.INSUFFICIENT_BALANCE.getMessage());
+            }
+            if(account.getStatus() != AccountStatus.ACTIVE){
+                return new ApiResponse<>(ErrorMessage.INACTIVE.getCode(), ErrorMessage.INACTIVE.getMessage());
+            }
+
+            if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ErrorMessage.OFF_LIMIT.getCode(), ErrorMessage.OFF_LIMIT.getMessage());
+            }
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setAmount(transactionCreateDTO.getAmount());
+            transaction.setType(TransactionType.TRANSFER);
+            transaction.setReceiver(receiver);
+            transaction.setLocation(transactionCreateDTO.getLocation());
+
+            account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
+            receiver.setBalance(receiver.getBalance().add(transactionCreateDTO.getAmount()));
+            transactionRepository.save(transaction);
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e) {
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
         }
 
-        if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
-            throw new RuntimeException("Transaction limit exceeded");
-        }
-
-        Transaction transaction = new Transaction();
-        transaction.setAccount(account);
-        transaction.setAmount(transactionCreateDTO.getAmount());
-        transaction.setType(TransactionType.TRANSFER);
-        transaction.setReceiver(receiver);
-        transaction.setLocation(transactionCreateDTO.getLocation());
-
-        account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
-        receiver.setBalance(receiver.getBalance().add(transactionCreateDTO.getAmount()));
-        transactionRepository.save(transaction);
-        return toTransactionResponseDTO(transaction);
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "transactions", key = "#id")
-    public TransactionResponseDTO getTransaction(Long id){
-        Transaction transaction = transactionRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Transaction with id "+id+" not found"));
-        return toTransactionResponseDTO(transaction);
+    public ApiResponse<Object> getTransaction(Long id){
+        try{
+            Transaction transaction = transactionRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Transaction with id "+id+" not found"));
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e) {
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "transactionsByAccount", key = "#accountId")
-    public Page<TransactionResponseDTO> getTransactionsByAccountId(Long accountId, Pageable pageable)
+    public ApiResponse<Object> getTransactionsByAccountId(Long accountId, Pageable pageable)
     {
-        Page<Transaction> transactions = transactionRepository.findByAccountId(accountId, pageable);
-        return transactions.map(this::toTransactionResponseDTO);
+        try{
+            Page<Transaction> transactions = transactionRepository.findByAccountId(accountId, pageable);
+            return new ApiResponse<>(transactions.map(this::toTransactionResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "transactionsByType", key = "#type")
-    public Page<TransactionResponseDTO> getTransactionsByType(TransactionType type, Pageable pageable)
+    public ApiResponse<Object> getTransactionsByType(TransactionType type, Pageable pageable)
     {
-        Page<Transaction> transactions = transactionRepository.findByType(type, pageable);
-        return transactions.map(this::toTransactionResponseDTO);
+        try{
+            Page<Transaction> transactions = transactionRepository.findByType(type, pageable);
+            return new ApiResponse<>(transactions.map(this::toTransactionResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "transactionsByAccountAndType", key = "#accountId + '-' + #type")
-    public Page<TransactionResponseDTO> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable)
+    public ApiResponse<Object> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable)
     {
-        Page<Transaction> transactions = transactionRepository.findByAccountIdAndType(accountId, type, pageable);
-        return transactions.map(this::toTransactionResponseDTO);
+        try{
+            Page<Transaction> transactions = transactionRepository.findByAccountIdAndType(accountId, type, pageable);
+            return new ApiResponse<>(transactions.map(this::toTransactionResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "transactionsByLocation", key = "#location")
-    public List<LocationCount> countTransactionsByLocation(){
-        return transactionRepository.countTransactionsByLocation();
+    public ApiResponse<Object> countTransactionsByLocation(){
+        try{
+            List<LocationCount> locationCounts = transactionRepository.countTransactionsByLocation();
+            return new ApiResponse<>(locationCounts, ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
     }
 
     //helper

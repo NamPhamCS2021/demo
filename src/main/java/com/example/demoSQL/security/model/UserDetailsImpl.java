@@ -1,6 +1,7 @@
 package com.example.demoSQL.security.model;
 
 import com.example.demoSQL.entity.Customer;
+import com.example.demoSQL.enums.UserRole;
 import com.example.demoSQL.security.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,13 +25,13 @@ public class UserDetailsImpl implements UserDetails {
     private Long id;
     private String username;
     private String password;
-    private String role;
+    private UserRole role;
     private Collection<? extends GrantedAuthority> authorities;
 
 
     public static UserDetailsImpl build(final User user) {
         List<GrantedAuthority> authorities = Arrays.asList(new GrantedAuthority[] {
-            new SimpleGrantedAuthority(user.getRole())
+            new SimpleGrantedAuthority(user.getRole().toString())
         });
         return new UserDetailsImpl(user.getId(), user.getUsername(), user.getPassword(), user.getRole(), authorities);
     }

@@ -1,13 +1,14 @@
 package com.example.demoSQL.contorller;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.account.AccountCreateDTO;
 import com.example.demoSQL.dto.account.AccountResponseDTO;
-import com.example.demoSQL.dto.account.AccountUpdateDTO;
+import com.example.demoSQL.dto.account.AccountUpdateLimitDTO;
+import com.example.demoSQL.dto.account.AccountUpdateStatusDTO;
 import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.service.AccountService;
-import com.example.demoSQL.service.AccountServiceImpl;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,72 +21,56 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/accounts")
 @Validated
+@RequiredArgsConstructor
 public class AccountController {
 
-    @Autowired
-    private AccountService accountService;
+    private final AccountService accountService;
 
-    public AccountController(AccountServiceImpl accountServiceImpl){
-        this.accountService = accountServiceImpl;
-    }
+
 
     @PostMapping
-    public ResponseEntity<AccountResponseDTO> createAccount(@Valid @RequestBody AccountCreateDTO accountCreateDTO){
-        AccountResponseDTO createdDTO = accountService.createAccount(accountCreateDTO);
+    public ResponseEntity<ApiResponse<Object>> createAccount(@Valid @RequestBody AccountCreateDTO accountCreateDTO){
+        ApiResponse<Object> createdDTO = accountService.createAccount(accountCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDTO);
     }
 
     @PutMapping("status/{id}")
-    public ResponseEntity<AccountResponseDTO> updateAccountStatus(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
-        AccountResponseDTO updatedDTO = accountService.updateAccountStatus(id, accountUpdateDTO);
+    public ResponseEntity<ApiResponse<Object>> updateAccountStatus(@PathVariable Long id, @Valid @RequestBody AccountUpdateStatusDTO accountUpdateStatusDTO){
+        ApiResponse<Object> updatedDTO = accountService.updateAccountStatus(id, accountUpdateStatusDTO);
         return ResponseEntity.ok(updatedDTO);
     }
 
     @PutMapping("accountlimit/{id}")
-    public ResponseEntity<AccountResponseDTO> updateAccountLimit(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
-        AccountResponseDTO updatedDTO = accountService.updateAccountLimit(id, accountUpdateDTO);
+    public ResponseEntity<ApiResponse<Object>> updateAccountLimit(@PathVariable Long id, @Valid @RequestBody AccountUpdateLimitDTO accountUpdateLimitDTO){
+        ApiResponse<Object> updatedDTO = accountService.updateAccountLimit(id, accountUpdateLimitDTO);
         return ResponseEntity.ok(updatedDTO);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id){
-        AccountResponseDTO accountResponseDTO = accountService.getAccountById(id);
+    public ResponseEntity<ApiResponse<Object>> getAccountById(@PathVariable Long id){
+        ApiResponse<Object> accountResponseDTO = accountService.getAccountById(id);
         return ResponseEntity.ok(accountResponseDTO);
     }
     @GetMapping
-    public ResponseEntity<Page<AccountResponseDTO>> getAllAccount(
+    public ResponseEntity<ApiResponse<Object>> getAllAccount(
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountService.getAllAccounts(pageable);
+        ApiResponse<Object> accounts = accountService.getAllAccounts(pageable);
         return ResponseEntity.ok(accounts);
     }
 
     @GetMapping("status/{status}")
-    public ResponseEntity<Page<AccountResponseDTO>> getAccountsByStatus(
+    public ResponseEntity<ApiResponse<Object>> getAccountsByStatus(
             @PathVariable AccountStatus status,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountService.getAccountsByStatus(status, pageable);
+        ApiResponse<Object> accounts = accountService.getAccountsByStatus(status, pageable);
         return ResponseEntity.ok(accounts);
     }
 
-    @GetMapping("customer")
-    public ResponseEntity<Page<AccountResponseDTO>> getAccountsByCustomer(
-            @RequestParam Long customerId,
-            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountService.getAccountsByCustomer(customerId, pageable);
-        return ResponseEntity.ok(accounts);
-    }
     @GetMapping("account-number/{accountNumber}")
-    public ResponseEntity<AccountResponseDTO> getAccountByAccountNumber(
+    public ResponseEntity<ApiResponse<Object>> getAccountByAccountNumber(
             @PathVariable String accountNumber) {
-        AccountResponseDTO account = accountService.getAccountByAccountNumber(accountNumber);
+        ApiResponse<Object> account = accountService.getAccountByAccountNumber(accountNumber);
         return ResponseEntity.ok(account);
     }
-    @GetMapping("customer/status/{status}")
-    public ResponseEntity<Page<AccountResponseDTO>> getAccountsByCustomerAndStatus(
-            @RequestParam Long customerId,
-            @PathVariable AccountStatus status,
-            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountService.getAccountsByCustomerAndStatus(customerId, status, pageable);
-        return ResponseEntity.ok(accounts);
-    }
+
 
 }

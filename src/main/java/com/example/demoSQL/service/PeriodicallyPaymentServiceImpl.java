@@ -32,10 +32,7 @@ public class PeriodicallyPaymentServiceImpl implements PeriodicallyPaymentServic
     @Autowired
     private AccountRepository accountRepository;
 
-    public PeriodicallyPaymentServiceImpl(PeriodicallyPaymentRepository periodicallyPaymentRepository, AccountRepository accountRepository) {
-        this.periodicallyPaymentRepository = periodicallyPaymentRepository;
-        this.accountRepository = accountRepository;
-    }
+
 
     @Override
     public PeriodicallyPaymentDTO createPeriodicallyPayment(PeriodicallyPaymentDTO periodicallyPaymentDTO) {

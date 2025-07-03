@@ -1,6 +1,7 @@
 package com.example.demoSQL.entity;
 
 
+import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.security.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -31,6 +32,9 @@ public class Customer {
 
     @Column(nullable = false, unique = true)
     private String phoneNumber;
+
+    @Column(nullable = false)
+    private CustomerType type;
 
     @OneToMany(mappedBy = "customer", cascade =CascadeType.ALL, fetch =FetchType.LAZY)
     private List<Account> accounts;

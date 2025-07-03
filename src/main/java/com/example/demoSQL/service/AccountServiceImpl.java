@@ -1,12 +1,16 @@
 package com.example.demoSQL.service;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.account.AccountCreateDTO;
 import com.example.demoSQL.dto.account.AccountResponseDTO;
-import com.example.demoSQL.dto.account.AccountUpdateDTO;
+import com.example.demoSQL.dto.account.AccountUpdateLimitDTO;
+import com.example.demoSQL.dto.account.AccountUpdateStatusDTO;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.AccountStatus;
+import com.example.demoSQL.enums.CustomerType;
+import com.example.demoSQL.enums.ErrorMessage;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AccountStatusHistoryRepository;
 import com.example.demoSQL.repository.CustomerRepository;
@@ -18,6 +22,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
 
 @Service
 @Transactional
@@ -32,107 +38,129 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private AccountStatusHistoryRepository accountStatusHistoryRepository;
 
-    public AccountServiceImpl(AccountRepository accountRepository, CustomerRepository customerRepository) {
-        this.accountRepository = accountRepository;
-        this.customerRepository = customerRepository;
-        this.accountStatusHistoryRepository = accountStatusHistoryRepository;
-    }
+
 
     @Override
-    @CachePut(value = "accountsbyCustomer", key = "#accountCreateDTO.customerId")
-    public AccountResponseDTO createAccount(AccountCreateDTO accountCreateDTO) {
-        Customer customer = customerRepository.findById(accountCreateDTO.getCustomerId()).orElseThrow(() -> new EntityNotFoundException("Customer with id " + accountCreateDTO.getCustomerId() + " not found"));
-        Account account = new Account();
-        account.setCustomer(customer);
-        account.setAccountLimit(accountCreateDTO.getAccountLimit());
-        accountRepository.save(account);
+    @CachePut(value = "accounts", key = "#accountCreateDTO.customerId")
+    public ApiResponse<Object> createAccount(AccountCreateDTO accountCreateDTO) {
+        try{
+            Customer customer = customerRepository.findById(accountCreateDTO.getCustomerId()).orElseThrow(() -> new EntityNotFoundException("Customer with id " + accountCreateDTO.getCustomerId() + " not found"));
+            Account account = new Account();
+            account.setCustomer(customer);
+            if(customer.getType() == CustomerType.TEMPORARY || customer.getType() == CustomerType.PERSONAL){
+                account.setAccountLimit(BigDecimal.valueOf(500000));
+            }
+            else {
+                account.setAccountLimit(BigDecimal.valueOf(10000000));
+            }
+            accountRepository.save(account);
 
-        return toAccountResponseDTO(account);
+            return new ApiResponse<>(toAccountResponseDTO(account), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e){
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch(Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
     }
 
     @Override
     @CachePut(value = "accounts", key = "#id")
-    public AccountResponseDTO updateAccountStatus(Long id, AccountUpdateDTO accountUpdate) {
-        Account existingAccount = accountRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
-        if (accountUpdate.getStatus() != null && accountUpdate.getStatus() != existingAccount.getStatus()) {
-            existingAccount.setStatus(accountUpdate.getStatus());
+    public ApiResponse<Object> updateAccountStatus(Long id, AccountUpdateStatusDTO accountUpdate) {
+        try{
+            Account existingAccount = accountRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
+            if (accountUpdate.getStatus() != null && accountUpdate.getStatus() != existingAccount.getStatus()) {
+                existingAccount.setStatus(accountUpdate.getStatus());
+            }
+
+            AccountStatusHistory history = new AccountStatusHistory();
+            history.setAccount(existingAccount);
+            history.setStatus(existingAccount.getStatus());
+            accountStatusHistoryRepository.save(history);
+            accountRepository.save(existingAccount);
+
+            return new ApiResponse<>(toAccountResponseDTO(existingAccount),ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e){
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch(Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
         }
 
-        AccountStatusHistory history = new AccountStatusHistory();
-        history.setAccount(existingAccount);
-        history.setStatus(existingAccount.getStatus());
-        accountStatusHistoryRepository.save(history);
-        accountRepository.save(existingAccount);
-
-        return toAccountResponseDTO(existingAccount);
     }
 
     @Override
     @CachePut(value = "accounts", key = "#id")
-    public AccountResponseDTO updateAccountLimit(Long id, AccountUpdateDTO accountUpdate) {
-        Account existingAccount = accountRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
-        if (accountUpdate.getAccountLimit() != null && accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
-            existingAccount.setAccountLimit(accountUpdate.getAccountLimit());
+    public ApiResponse<Object> updateAccountLimit(Long id, AccountUpdateLimitDTO accountUpdate) {
+        try{
+            Account existingAccount = accountRepository.findById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
+            if (accountUpdate.getAccountLimit() != null && accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
+                existingAccount.setAccountLimit(accountUpdate.getAccountLimit());
+            }
+            accountRepository.save(existingAccount);
+            return new ApiResponse<>(toAccountResponseDTO(existingAccount), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+
+        } catch (EntityNotFoundException e){
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch(Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
         }
-        accountRepository.save(existingAccount);
-        return toAccountResponseDTO(existingAccount);
+
     }
 
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "accounts", key = "#id")
-    public AccountResponseDTO getAccountById(Long id){
-        Account account = accountRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Account with id "+id+" not found"));
-        return toAccountResponseDTO(account);
+    public ApiResponse<Object> getAccountById(Long id){
+        try{
+            Account account = accountRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Account with id "+id+" not found"));
+            return new ApiResponse<>(toAccountResponseDTO(account), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e) {
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "accounts", key = "#customerId")
-    public Page<AccountResponseDTO> getAccountsByCustomer(Long customerId, Pageable pageable) {
-        if(!customerRepository.existsById(customerId)){
-            throw new EntityNotFoundException("Customer with id "+customerId+" not found");
-        }
-        Page<Account> accountPage = accountRepository.findByCustomerId(customerId, pageable);
-        return accountPage.map(this::toAccountResponseDTO);
-    }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "accounts")
-    public Page<AccountResponseDTO> getAllAccounts(Pageable pageable) {
-        Page<Account> accountPage = accountRepository.findAll(pageable);
-        return accountPage.map(this::toAccountResponseDTO);
+    public ApiResponse<Object> getAllAccounts(Pageable pageable) {
+        try{
+            Page<Account> accountPage = accountRepository.findAll(pageable);
+            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "accountsbyNumber", key = "#accountNumber")
-    public AccountResponseDTO getAccountByAccountNumber(String accountNumber) {
-        Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(()->new EntityNotFoundException("Account with account number "+accountNumber+" not found"));
-        return toAccountResponseDTO(account);
+    public ApiResponse<Object> getAccountByAccountNumber(String accountNumber) {
+        try{
+            Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(()->new EntityNotFoundException("Account with account number "+accountNumber+" not found"));
+            return new ApiResponse<>(toAccountResponseDTO(account), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e) {
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "accountsbyStatus", key = "#status")
-    public Page<AccountResponseDTO> getAccountsByStatus(AccountStatus status, Pageable pageable) {
-        Page<Account> accountPage = accountRepository.findByStatus(status, pageable);
-        return accountPage.map(this::toAccountResponseDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "accountsByCustomerandStatus", key = "#customerId + '-' + #status")
-    public Page<AccountResponseDTO> getAccountsByCustomerAndStatus(Long customerId, AccountStatus status, Pageable pageable) {
-        if(!customerRepository.existsById(customerId)){
-            throw new EntityNotFoundException("Customer with id "+customerId+" not found");
+    public ApiResponse<Object> getAccountsByStatus(AccountStatus status, Pageable pageable) {
+        try{
+            Page<Account> accountPage = accountRepository.findByStatus(status, pageable);
+            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
         }
-        Page<Account> accountPage = accountRepository.findByCustomerIdAndStatus(customerId, status, pageable);
-        return accountPage.map(this::toAccountResponseDTO);
     }
 
     //helper

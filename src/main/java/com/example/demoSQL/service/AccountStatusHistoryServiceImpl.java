@@ -24,9 +24,7 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
     @Autowired
     private AccountRepository accountRepository;
 
-    public AccountStatusHistoryServiceImpl(AccountStatusHistoryRepository accountStatusHistoryRepository) {
-        this.accountStatusHistoryRepository = accountStatusHistoryRepository;
-    }
+
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "accountStatusHistoryByAccount", key = "#id")
@@ -38,17 +36,6 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
         return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "accountStatusHistoryByAccountNumber", key = "#accountNumber")
-    public Page<AccountStatusHistoryResponseDTO> findByAccountNumber(String accountNumber, Pageable pageable){
-        if(!accountRepository.existsByAccountNumber(accountNumber)){
-            throw new EntityNotFoundException("Account with account number "+accountNumber+" not found");
-        }
-        Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findByAccountNumber(accountNumber, pageable);
-        return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
-    }
-
 
     @Override
     @Transactional(readOnly = true)
@@ -57,16 +44,6 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
             throw new EntityNotFoundException("Account with id " + id + " not found");
         }
         Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findBetweenByAccountId(id, start, end, pageable);
-        return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<AccountStatusHistoryResponseDTO> findBetweenByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end, Pageable pageable){
-        if(!accountRepository.existsByAccountNumber(accountNumber)) {
-            throw new EntityNotFoundException("Account with account number " + accountNumber + " not found");
-        }
-        Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findBetweenByAccountNumber(accountNumber, start, end, pageable);
         return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
     }
 

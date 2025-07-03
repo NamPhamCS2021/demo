@@ -1,13 +1,14 @@
 package com.example.demoSQL.contorller;
 
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.service.TransactionService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -16,68 +17,65 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/transactions")
 @Validated
+@RequiredArgsConstructor
 public class TransactionController {
 
-    @Autowired
-    private TransactionService transactionService;
-
-    public TransactionController(TransactionService transactionService) {
-        this.transactionService = transactionService;
-    }
+    private final TransactionService transactionService;
 
     @PostMapping("/deposit")
-    public ResponseEntity<TransactionResponseDTO> deposit(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
-        TransactionResponseDTO transactionResponseDTO = transactionService.deposit(transactionCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponseDTO);
+    public ResponseEntity<ApiResponse<Object>> deposit(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
+        ;
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.deposit(transactionCreateDTO));
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<TransactionResponseDTO> withdraw(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
-        TransactionResponseDTO transactionResponseDTO =  transactionService.withdraw(transactionCreateDTO);
+    public ResponseEntity<ApiResponse<Object>> withdraw(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
+        ApiResponse<Object> transactionResponseDTO =  transactionService.withdraw(transactionCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponseDTO);
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<TransactionResponseDTO> transfer(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
-        TransactionResponseDTO transactionResponseDTO = transactionService.transfer(transactionCreateDTO);
+    public ResponseEntity<ApiResponse<Object>> transfer(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
+        ApiResponse<Object> transactionResponseDTO = transactionService.transfer(transactionCreateDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponseDTO);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TransactionResponseDTO> getTransaction(@PathVariable Long id){
-        TransactionResponseDTO transactionResponseDTO = transactionService.getTransaction(id);
+    public ResponseEntity<ApiResponse<Object>> getTransaction(@PathVariable Long id){
+        ApiResponse<Object> transactionResponseDTO = transactionService.getTransaction(id);
         return ResponseEntity.ok(transactionResponseDTO);
     }
 
     @GetMapping("/account")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountId(@RequestParam Long accountId,
+    public ResponseEntity<ApiResponse<Object>> getTransactionsByAccountId(@RequestParam Long accountId,
                                                                              @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByAccountId(accountId, pageable);
+        ApiResponse<Object> transactions = transactionService.getTransactionsByAccountId(accountId, pageable);
         return ResponseEntity.ok(transactions);
     }
 
     @GetMapping("/type/{type}")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByType(@PathVariable TransactionType type,
+    public ResponseEntity<ApiResponse<Object>> getTransactionsByType(@PathVariable TransactionType type,
                                                                              @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByType(type, pageable);
+        ApiResponse<Object> transactions = transactionService.getTransactionsByType(type, pageable);
         return ResponseEntity.ok(transactions);
     }
 
     @GetMapping("account/type/{type}")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountIdAndType(@RequestParam Long accountId,
+    public ResponseEntity<ApiResponse<Object>> getTransactionsByAccountIdAndType(@RequestParam Long accountId,
                                                                              @PathVariable TransactionType type,
                                                                              @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByAccountIdAndType(accountId, type, pageable);
+        ApiResponse<Object> transactions = transactionService.getTransactionsByAccountIdAndType(accountId, type, pageable);
         return ResponseEntity.ok(transactions);
     }
 
     @GetMapping("locationcount")
-    public List<LocationCount> countTransactionsByLocation(){
+    public ApiResponse<Object> countTransactionsByLocation(){
         return transactionService.countTransactionsByLocation();
     }
 }

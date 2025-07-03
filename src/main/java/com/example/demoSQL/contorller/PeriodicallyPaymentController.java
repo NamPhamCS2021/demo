@@ -4,6 +4,7 @@ import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentDTO;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentUpdateDTO;
 import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.service.PeriodicallyPaymentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,14 +18,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Repository
 @RequestMapping("/api/payments")
+@RequiredArgsConstructor
 public class PeriodicallyPaymentController {
 
-    @Autowired
-    private PeriodicallyPaymentService periodicallyPaymentService;
-
-    public PeriodicallyPaymentController(PeriodicallyPaymentService periodicallyPaymentService) {
-        this.periodicallyPaymentService = periodicallyPaymentService;
-    }
+    private final PeriodicallyPaymentService periodicallyPaymentService;
 
     @GetMapping("/{id}")
     public ResponseEntity<PeriodicallyPaymentDTO> findById(@PathVariable Long id){

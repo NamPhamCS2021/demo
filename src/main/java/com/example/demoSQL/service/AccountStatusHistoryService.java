@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 public interface AccountStatusHistoryService {
 
     Page<AccountStatusHistoryResponseDTO> findByAccountId(Long accountId, Pageable pageable);
-    Page<AccountStatusHistoryResponseDTO> findByAccountNumber(String accountNumber, Pageable pageable);
     Page<AccountStatusHistoryResponseDTO> findBetweenByAccount(Long id, LocalDateTime start, LocalDateTime end, Pageable pageable);
-    Page<AccountStatusHistoryResponseDTO> findBetweenByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end, Pageable pageable);
+
 }

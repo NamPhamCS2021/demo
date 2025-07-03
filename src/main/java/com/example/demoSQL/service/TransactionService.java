@@ -1,5 +1,6 @@
 package com.example.demoSQL.service;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
@@ -11,19 +12,19 @@ import java.util.List;
 
 public interface TransactionService {
 
-    TransactionResponseDTO deposit(TransactionCreateDTO transactionCreateDTO);
+    ApiResponse<Object> deposit(TransactionCreateDTO transactionCreateDTO);
 
-    TransactionResponseDTO withdraw(TransactionCreateDTO transactionCreateDTO);
+    ApiResponse<Object> withdraw(TransactionCreateDTO transactionCreateDTO);
 
-    TransactionResponseDTO transfer(TransactionCreateDTO transactionCreateDTO);
+    ApiResponse<Object> transfer(TransactionCreateDTO transactionCreateDTO);
 
-    TransactionResponseDTO getTransaction(Long id);
+    ApiResponse<Object> getTransaction(Long id);
 
-    Page<TransactionResponseDTO> getTransactionsByAccountId(Long accountId, Pageable pageable);
+    ApiResponse<Object> getTransactionsByAccountId(Long accountId, Pageable pageable);
 
-    Page<TransactionResponseDTO> getTransactionsByType(TransactionType type, Pageable pageable);
-    Page<TransactionResponseDTO> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
+    ApiResponse<Object> getTransactionsByType(TransactionType type, Pageable pageable);
+    ApiResponse<Object> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
 
-    List<LocationCount> countTransactionsByLocation();
+    ApiResponse<Object> countTransactionsByLocation();
 
 }

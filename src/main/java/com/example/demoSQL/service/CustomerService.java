@@ -1,5 +1,6 @@
 package com.example.demoSQL.service;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
 import com.example.demoSQL.dto.customer.CustomerResponseDTO;
 import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
@@ -10,8 +11,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface CustomerService {
 
-    CustomerResponseDTO createCustomer(CustomerCreateDTO customerCreateDTO);
-    CustomerResponseDTO updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO);
-    CustomerResponseDTO getCustomerById(Long id);
-    Page<CustomerSummaryDTO> getAll(Pageable pageable);
+    ApiResponse<Object> createCustomer(CustomerCreateDTO customerCreateDTO);
+    ApiResponse<Object> updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO);
+    ApiResponse<Object> getCustomerById(Long id);
+    ApiResponse<Object> getAll(Pageable pageable);
 }

@@ -1,6 +1,8 @@
 package com.example.demoSQL.security.entity;
 
 import com.example.demoSQL.entity.Customer;
+import com.example.demoSQL.enums.CustomerType;
+import com.example.demoSQL.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,7 +28,7 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role;
+    private UserRole role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, optional = true)
     private Customer customer;

@@ -1,15 +1,20 @@
 package com.example.demoSQL.service;
 
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
 import com.example.demoSQL.dto.customer.CustomerResponseDTO;
 import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
 import com.example.demoSQL.entity.Customer;
+import com.example.demoSQL.enums.CustomerType;
+import com.example.demoSQL.enums.ErrorMessage;
+import com.example.demoSQL.enums.UserRole;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,86 +26,109 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
-    @Autowired
-    private CustomerRepository customerRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final CustomerRepository customerRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        this.customerRepository = customerRepository;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-    }
+    private final UserRepository userRepository;
+
+
+    private final PasswordEncoder passwordEncoder;
+
 
     @Override
-    @CachePut(value = "customersByEmail", key = "#customerCreateDTO.email")
-    public CustomerResponseDTO createCustomer(CustomerCreateDTO customerCreateDTO){
-        if(customerRepository.existsByEmail(customerCreateDTO.getEmail()) ||
-        customerRepository.existsByPhoneNumber(customerCreateDTO.getPhoneNumber())){
-            throw new IllegalArgumentException("Customer with this email or phone is already exists");
-        }
+    @CachePut(value = "customers", key = "#customerCreateDTO.email")
+    public ApiResponse<Object> createCustomer(CustomerCreateDTO customerCreateDTO){
+        try{
+            if(customerRepository.existsByEmail(customerCreateDTO.getEmail()) ||
+                    customerRepository.existsByPhoneNumber(customerCreateDTO.getPhoneNumber())){
+                throw new RuntimeException("Customer with this email or phone is already exists");
+            }
 
-        Customer customer = new Customer();
-        customer.setFirstName(customerCreateDTO.getFirstName());
-        customer.setLastName(customerCreateDTO.getLastName());
-        customer.setEmail(customerCreateDTO.getEmail());
-        customer.setPhoneNumber(customerCreateDTO.getPhoneNumber());
+            Customer customer = new Customer();
+            customer.setFirstName(customerCreateDTO.getFirstName());
+            customer.setLastName(customerCreateDTO.getLastName());
+            customer.setEmail(customerCreateDTO.getEmail());
+            customer.setType(customerCreateDTO.getType() == null ? CustomerType.PERSONAL : customerCreateDTO.getType());
+            customer.setPhoneNumber(customerCreateDTO.getPhoneNumber());
 
-        User user = new User();
-        user.setCustomer(customer);
-        user.setUsername(customerCreateDTO.getEmail());
-        user.setRole("USER");
-        user.setPassword(passwordEncoder.encode("123456"));
-        userRepository.save(user);
-        customerRepository.save(customer);
+            User user = new User();
+            user.setCustomer(customer);
+            user.setUsername(customerCreateDTO.getEmail());
+            user.setRole(UserRole.USER);
+            user.setPassword(passwordEncoder.encode("123456"));
+            userRepository.save(user);
+            customerRepository.save(customer);
 
 //        gotta do this later
-        return toCustomerResponse(customer);
+            return new ApiResponse<>(toCustomerResponse(customer), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (RuntimeException e){
+            return new ApiResponse<>(ErrorMessage.ALREADY_EXISTED.getCode(), ErrorMessage.ALREADY_EXISTED.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
+
     }
 
     @Override
-    @CachePut(value = "customersByEmail", key = "#customerUpdateDTO.email")
-    public CustomerResponseDTO updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
-        Customer existingCustomer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
+    @CachePut(value = "customers", key = "#customerUpdateDTO.email")
+    public ApiResponse<Object> updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
+        try{
+            Customer existingCustomer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
 
-        if(existingCustomer.getEmail() != null && existingCustomer.getEmail().equals(customerUpdateDTO.getEmail()) &&
-        customerRepository.existsByEmailAndId(customerUpdateDTO.getEmail(),id)){
-            throw new EntityNotFoundException("Customer with this email is already exists");
-        }
-        if(existingCustomer.getPhoneNumber() != null && existingCustomer.getPhoneNumber().equals(customerUpdateDTO.getEmail()) &&
-        customerRepository.existsByPhoneNumberAndId(customerUpdateDTO.getPhoneNumber(), id)) {
-            throw new EntityNotFoundException("Customer with this phone number is already exists");
-        }
-        if(customerUpdateDTO.getEmail() != null){
-            existingCustomer.setEmail(customerUpdateDTO.getEmail());
-        }
-        if(customerUpdateDTO.getPhoneNumber() != null){
-            existingCustomer.setPhoneNumber(customerUpdateDTO.getPhoneNumber());
-        }
-        Customer updatedCustomer = customerRepository.save(existingCustomer);
+            if(existingCustomer.getEmail() != null && existingCustomer.getEmail().equals(customerUpdateDTO.getEmail()) &&
+                    customerRepository.existsByEmailAndId(customerUpdateDTO.getEmail(),id)){
+                throw new EntityNotFoundException("Customer with this email is already exists");
+            }
+            if(existingCustomer.getPhoneNumber() != null && existingCustomer.getPhoneNumber().equals(customerUpdateDTO.getEmail()) &&
+                    customerRepository.existsByPhoneNumberAndId(customerUpdateDTO.getPhoneNumber(), id)) {
+                throw new EntityNotFoundException("Customer with this phone number is already exists");
+            }
+            if(customerUpdateDTO.getEmail() != null){
+                existingCustomer.setEmail(customerUpdateDTO.getEmail());
+            }
+            if(customerUpdateDTO.getPhoneNumber() != null){
+                existingCustomer.setPhoneNumber(customerUpdateDTO.getPhoneNumber());
+            }
+            Customer updatedCustomer = customerRepository.save(existingCustomer);
 //        later
-        return toCustomerResponse(updatedCustomer);
+            return new ApiResponse<>(toCustomerResponse(updatedCustomer), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e){
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "customers", key = "#id")
-    public CustomerResponseDTO getCustomerById(Long id){
-        Customer customer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
-        return toCustomerResponse(customer);
+    public ApiResponse<Object> getCustomerById(Long id){
+        try {
+            Customer customer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
+            return new ApiResponse<>(toCustomerResponse(customer), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (EntityNotFoundException e){
+            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "customers")
-    public Page<CustomerSummaryDTO> getAll(Pageable pageable){
-        Page<Customer> customerPage = customerRepository.findAll(pageable);
-        return customerPage.map(this::toCustomerSummaryDTO);
+    public ApiResponse<Object> getAll(Pageable pageable){
+        try {
+            Page<Customer> customerPage = customerRepository.findAll(pageable);
+            return new ApiResponse<>(customerPage.map(this::toCustomerResponse), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+        }
     }
 
 

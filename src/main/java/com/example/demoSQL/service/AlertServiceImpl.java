@@ -39,12 +39,7 @@ public class AlertServiceImpl implements AlertService {
     @Autowired
     private Executor virtualExecutor;
 
-    public AlertServiceImpl(AlertRepository alertRepository, AccountRepository accountRepository, TransactionRepository transactionRepository) {
-        this.alertRepository = alertRepository;
-        this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
-        this.virtualExecutor = virtualExecutor;
-    }
+
 
     @Override
     @Scheduled(cron = "0 0 0 * * *")

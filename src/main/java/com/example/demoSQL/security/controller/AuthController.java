@@ -2,6 +2,7 @@ package com.example.demoSQL.security.controller;
 
 import com.example.demoSQL.security.model.AuthRequest;
 import com.example.demoSQL.security.model.AuthResponse;
+import com.example.demoSQL.security.model.SignUpResponse;
 import com.example.demoSQL.security.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,16 @@ public class AuthController {
     @PostMapping("/api/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request){
         ResponseEntity<AuthResponse> response = authService.login(request);
+        return response;
+    }
+    @PostMapping("api/aLogin")
+    public ResponseEntity<SignUpResponse> adminLogin(@RequestBody AuthRequest request){
+        ResponseEntity<SignUpResponse> response = authService.adminRegister(request);
+        return response;
+    }
+    @PostMapping("/api/aSignup")
+    public ResponseEntity<SignUpResponse> adminSignUp(@RequestBody AuthRequest request){
+        ResponseEntity<SignUpResponse> response = authService.adminRegister(request);
         return response;
     }
 }

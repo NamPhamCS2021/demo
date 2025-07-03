@@ -1,8 +1,12 @@
 package com.example.demoSQL.security.service;
 
+import com.example.demoSQL.enums.UserRole;
+import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.model.AuthRequest;
 import com.example.demoSQL.security.model.AuthResponse;
+import com.example.demoSQL.security.model.SignUpResponse;
 import com.example.demoSQL.security.model.UserDetailsImpl;
+import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.security.utils.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,10 +36,14 @@ public class AuthServiceImpl implements AuthService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    public AuthServiceImpl(UserService userService, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager) {
+    @Autowired
+    private UserRepository userRepository;
+
+    public AuthServiceImpl(UserService userService, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserRepository userRepository) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -64,6 +72,21 @@ public class AuthServiceImpl implements AuthService {
         response.setUsername(userDetails.getUsername());
         response.setExpirationTime(new Date(new Date().getTime() + 720000));
 
+
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<SignUpResponse> adminRegister(AuthRequest authRequest) {
+        User user = new User();
+        user.setUsername(authRequest.getUsername());
+        user.setPassword(passwordEncoder.encode(authRequest.getPassword()));
+        user.setRole(UserRole.ADMIN);
+
+        SignUpResponse response = new SignUpResponse();
+        response.setRole(user.getRole());
+        response.setUsername(user.getUsername());
+        userRepository.save(user);
 
         return ResponseEntity.ok(response);
     }

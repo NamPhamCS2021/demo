@@ -3,6 +3,7 @@ package com.example.demoSQL.contorller;
 import com.example.demoSQL.dto.accountstatushistory.AccountStatusHistoryResponseDTO;
 
 import com.example.demoSQL.service.AccountStatusHistoryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cglib.core.Local;
@@ -20,26 +21,17 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/accountstatushistory")
 @Validated
+@RequiredArgsConstructor
 public class AccountStatusHistoryController {
 
-    @Autowired
-    private AccountStatusHistoryService accountStatusHistoryService;
+    private final AccountStatusHistoryService accountStatusHistoryService;
 
-    public AccountStatusHistoryController(AccountStatusHistoryService accountStatusHistoryService) {
-        this.accountStatusHistoryService = accountStatusHistoryService;
-    }
+
 
     @GetMapping("/account/{id}")
     public ResponseEntity<Page<AccountStatusHistoryResponseDTO>> getAccountStatusHistoryById(@PathVariable Long id,
                                                                                              @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
         Page<AccountStatusHistoryResponseDTO> accountStatusHistoryPage = accountStatusHistoryService.findByAccountId(id, pageable);
-        return ResponseEntity.ok(accountStatusHistoryPage);
-    }
-
-    @GetMapping("/accountnumber/{accountNumber}")
-    public ResponseEntity<Page<AccountStatusHistoryResponseDTO>> getAccountStatusHistoryByAccountNumber(@PathVariable String accountNumber,
-                                                                                             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        Page<AccountStatusHistoryResponseDTO> accountStatusHistoryPage = accountStatusHistoryService.findByAccountNumber(accountNumber, pageable);
         return ResponseEntity.ok(accountStatusHistoryPage);
     }
 
@@ -53,12 +45,5 @@ public class AccountStatusHistoryController {
         return ResponseEntity.ok(accountStatusHistoryPage);
     }
 
-    @GetMapping("accountnumber/between")
-    public ResponseEntity<Page<AccountStatusHistoryResponseDTO>>getAccountStatusHistoryByAccountNumberAndStatus(@RequestParam String accountNumber,
-                                                                                                                @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
-                                                                                                                @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end,
-                                                                                                                @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<AccountStatusHistoryResponseDTO> accountStatusHistoryPage = accountStatusHistoryService.findBetweenByAccountNumber(accountNumber, start, end, Pageable.unpaged());
-        return ResponseEntity.ok(accountStatusHistoryPage);
-    }
+
 }

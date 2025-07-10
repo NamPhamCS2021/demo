@@ -10,12 +10,11 @@ import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.enums.CustomerType;
-import com.example.demoSQL.enums.ErrorMessage;
+import com.example.demoSQL.enums.EResponseCode;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AccountStatusHistoryRepository;
 import com.example.demoSQL.repository.CustomerRepository;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -24,19 +23,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
-    @Autowired
-    private AccountStatusHistoryRepository accountStatusHistoryRepository;
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository;
 
 
 
@@ -44,10 +42,14 @@ public class AccountServiceImpl implements AccountService {
     @CachePut(value = "accounts", key = "#accountCreateDTO.customerId")
     public ApiResponse<Object> createAccount(AccountCreateDTO accountCreateDTO) {
         try{
-            Customer customer = customerRepository.findById(accountCreateDTO.getCustomerId()).orElseThrow(() -> new EntityNotFoundException("Customer with id " + accountCreateDTO.getCustomerId() + " not found"));
+            Optional<Customer> optionalCustomer = customerRepository.findById(accountCreateDTO.getCustomerId());
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(EResponseCode.NOT_FOUND.getCode(), EResponseCode.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalCustomer.get();
             Account account = new Account();
             account.setCustomer(customer);
-            if(customer.getType() == CustomerType.TEMPORARY || customer.getType() == CustomerType.PERSONAL){
+            if(customer.getType().equals(CustomerType.TEMPORARY) || customer.getType().equals(CustomerType.PERSONAL)){
                 account.setAccountLimit(BigDecimal.valueOf(500000));
             }
             else {
@@ -55,11 +57,9 @@ public class AccountServiceImpl implements AccountService {
             }
             accountRepository.save(account);
 
-            return new ApiResponse<>(toAccountResponseDTO(account), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+            return new ApiResponse<>(toAccountResponseDTO(account), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
         } catch(Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
     }
 
@@ -67,8 +67,11 @@ public class AccountServiceImpl implements AccountService {
     @CachePut(value = "accounts", key = "#id")
     public ApiResponse<Object> updateAccountStatus(Long id, AccountUpdateStatusDTO accountUpdate) {
         try{
-            Account existingAccount = accountRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(EResponseCode.NOT_FOUND.getCode(), EResponseCode.NOT_FOUND.getMessage());
+            }
+            Account existingAccount = optionalAccount.get();
             if (accountUpdate.getStatus() != null && accountUpdate.getStatus() != existingAccount.getStatus()) {
                 existingAccount.setStatus(accountUpdate.getStatus());
             }
@@ -79,11 +82,9 @@ public class AccountServiceImpl implements AccountService {
             accountStatusHistoryRepository.save(history);
             accountRepository.save(existingAccount);
 
-            return new ApiResponse<>(toAccountResponseDTO(existingAccount),ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+            return new ApiResponse<>(toAccountResponseDTO(existingAccount), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
         } catch(Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
 
     }
@@ -92,18 +93,21 @@ public class AccountServiceImpl implements AccountService {
     @CachePut(value = "accounts", key = "#id")
     public ApiResponse<Object> updateAccountLimit(Long id, AccountUpdateLimitDTO accountUpdate) {
         try{
-            Account existingAccount = accountRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("Account with id " + id + " not found"));
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(EResponseCode.NOT_FOUND.getCode(), EResponseCode.NOT_FOUND.getMessage());
+            }
+
+            Account existingAccount = optionalAccount.get();
             if (accountUpdate.getAccountLimit() != null && accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
                 existingAccount.setAccountLimit(accountUpdate.getAccountLimit());
             }
             accountRepository.save(existingAccount);
-            return new ApiResponse<>(toAccountResponseDTO(existingAccount), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(toAccountResponseDTO(existingAccount), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
 
-        } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
         } catch(Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
 
     }
@@ -114,12 +118,14 @@ public class AccountServiceImpl implements AccountService {
     @Cacheable(value = "accounts", key = "#id")
     public ApiResponse<Object> getAccountById(Long id){
         try{
-            Account account = accountRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Account with id "+id+" not found"));
-            return new ApiResponse<>(toAccountResponseDTO(account), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e) {
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(EResponseCode.NOT_FOUND.getCode(), EResponseCode.NOT_FOUND.getMessage());
+            }
+            Account existingAccount = optionalAccount.get();
+            return new ApiResponse<>(toAccountResponseDTO(existingAccount), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
         } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
     }
 
@@ -130,9 +136,9 @@ public class AccountServiceImpl implements AccountService {
     public ApiResponse<Object> getAllAccounts(Pageable pageable) {
         try{
             Page<Account> accountPage = accountRepository.findAll(pageable);
-            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
         } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
 
     }
@@ -142,12 +148,14 @@ public class AccountServiceImpl implements AccountService {
     @Cacheable(value = "accountsbyNumber", key = "#accountNumber")
     public ApiResponse<Object> getAccountByAccountNumber(String accountNumber) {
         try{
-            Account account = accountRepository.findByAccountNumber(accountNumber).orElseThrow(()->new EntityNotFoundException("Account with account number "+accountNumber+" not found"));
-            return new ApiResponse<>(toAccountResponseDTO(account), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e) {
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(EResponseCode.NOT_FOUND.getCode(), EResponseCode.NOT_FOUND.getMessage());
+            }
+            Account account = optionalAccount.get();
+            return new ApiResponse<>(toAccountResponseDTO(account), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
         } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
     }
 
@@ -157,9 +165,9 @@ public class AccountServiceImpl implements AccountService {
     public ApiResponse<Object> getAccountsByStatus(AccountStatus status, Pageable pageable) {
         try{
             Page<Account> accountPage = accountRepository.findByStatus(status, pageable);
-            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage());
         } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(e.getMessage(), EResponseCode.FAIL.getCode(), EResponseCode.FAIL.getMessage());
         }
     }
 

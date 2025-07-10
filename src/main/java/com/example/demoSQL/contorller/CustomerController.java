@@ -3,15 +3,11 @@ package com.example.demoSQL.contorller;
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
-import com.example.demoSQL.dto.customer.CustomerResponseDTO;
-import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
-import com.example.demoSQL.enums.ErrorMessage;
+import com.example.demoSQL.enums.EResponseCode;
 import com.example.demoSQL.service.CustomerServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -46,10 +42,10 @@ public class CustomerController {
         try{
             ApiResponse<Object> customerDTO = customerServiceImpl.getCustomerById(id);
             return ResponseEntity.ok(
-                new ApiResponse<>(customerDTO, ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage())
+                new ApiResponse<>(customerDTO, EResponseCode.SUCCESS.getCode(), EResponseCode.SUCCESS.getMessage())
             );
         } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(e.getMessage(), ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(e.getMessage(), EResponseCode.NOT_FOUND.getCode(), EResponseCode.NOT_FOUND.getMessage()));
         }
 
 

@@ -5,6 +5,7 @@ import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.repository.*;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,27 +18,20 @@ import java.util.Map;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ReportServiceImpl implements ReportService{
 
-    @Autowired
-    private AccountStatusHistoryRepository accountStatusHistoryRepository;
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
 
-    @Autowired
-    AccountStatusHistoryRepository accountStatusHistoryRepository1;
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository1;
 
-    @Autowired
-    private AlertRepository alertRepository;
-
-
+    private final AlertRepository alertRepository;
 
     @Override
     public Map<String, Object> generateReport(LocalDateTime start, LocalDateTime end) {

@@ -1,5 +1,6 @@
 package com.example.demoSQL.contorller;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentDTO;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentUpdateDTO;
 import com.example.demoSQL.enums.SubscriptionStatus;
@@ -24,22 +25,22 @@ public class PeriodicallyPaymentController {
     private final PeriodicallyPaymentService periodicallyPaymentService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<PeriodicallyPaymentDTO> findById(@PathVariable Long id){
-        PeriodicallyPaymentDTO payment = periodicallyPaymentService.getPeriodicallyPaymentById(id);
+    public ResponseEntity<ApiResponse<Object>> findById(@PathVariable Long id){
+        ApiResponse<Object> payment = periodicallyPaymentService.getPeriodicallyPaymentById(id);
         return ResponseEntity.ok(payment);
     }
 
     @GetMapping("/account/{id}")
-    public ResponseEntity<Page<PeriodicallyPaymentDTO>> findByAccountId(@PathVariable Long id,
+    public ResponseEntity<ApiResponse<Object>> findByAccountId(@PathVariable Long id,
                                                                         @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<PeriodicallyPaymentDTO> payment = periodicallyPaymentService.getPeriodicallyPaymentByAccountId(id, pageable);
+        ApiResponse<Object> payment = periodicallyPaymentService.getPeriodicallyPaymentByAccountId(id, pageable);
         return ResponseEntity.ok(payment);
     }
     @GetMapping("/account/status")
-    public ResponseEntity<Page<PeriodicallyPaymentDTO>> findByAccountIdAndStatus(@RequestParam Long id,
+    public ResponseEntity<ApiResponse<Object>> findByAccountIdAndStatus(@RequestParam Long id,
                                                                                  @RequestParam SubscriptionStatus status,
                                                                                  @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<PeriodicallyPaymentDTO> payment = periodicallyPaymentService.getByAccountIdAndStatus(id, status, pageable);
+        ApiResponse<Object> payment = periodicallyPaymentService.getByAccountIdAndStatus(id, status, pageable);
         return ResponseEntity.ok(payment);
     }
 }

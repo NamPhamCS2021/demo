@@ -1,5 +1,6 @@
 package com.example.demoSQL.contorller;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.accountstatushistory.AccountStatusHistoryResponseDTO;
 
 import com.example.demoSQL.service.AccountStatusHistoryService;
@@ -33,21 +34,19 @@ public class AccountStatusHistoryController {
 
     @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
     @GetMapping("/account/{id}")
-    public ResponseEntity<Page<AccountStatusHistoryResponseDTO>> getAccountStatusHistoryById(@PathVariable Long id,
-                                                                                             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        Page<AccountStatusHistoryResponseDTO> accountStatusHistoryPage = accountStatusHistoryService.findByAccountId(id, pageable);
-        return ResponseEntity.ok(accountStatusHistoryPage);
+    public ApiResponse<Object> getAccountStatusHistoryById(@PathVariable Long id,
+                                                   @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
+        return accountStatusHistoryService.findByAccountId(id, pageable);
     }
 
 
     @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
     @GetMapping("account/between")
-    public ResponseEntity<Page<AccountStatusHistoryResponseDTO>>getAccountStatusHistoryByIdAndStatus(@RequestParam Long id,
+    public ApiResponse<Object> getAccountStatusHistoryByIdAndStatus(@RequestParam Long id,
                                                                                                      @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                                                                                      @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end,
                                                                                                      @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<AccountStatusHistoryResponseDTO> accountStatusHistoryPage = accountStatusHistoryService.findBetweenByAccount(id, start, end, Pageable.unpaged());
-        return ResponseEntity.ok(accountStatusHistoryPage);
+        return accountStatusHistoryService.findBetweenByAccount(id, start, end, Pageable.unpaged());
     }
 
 

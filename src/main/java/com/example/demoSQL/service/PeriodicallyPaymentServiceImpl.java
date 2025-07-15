@@ -1,9 +1,11 @@
 package com.example.demoSQL.service;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentDTO;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentUpdateDTO;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.PeriodicallyPayment;
+import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.PeriodicallyPaymentRepository;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static com.example.demoSQL.enums.Period.*;
 
@@ -35,48 +38,89 @@ public class PeriodicallyPaymentServiceImpl implements PeriodicallyPaymentServic
 
 
     @Override
-    public PeriodicallyPaymentDTO createPeriodicallyPayment(PeriodicallyPaymentDTO periodicallyPaymentDTO) {
-        Account account = accountRepository.findById(periodicallyPaymentDTO.getAccountId()).orElseThrow(() ->  new EntityNotFoundException("Account with id "+periodicallyPaymentDTO.getAccountId()+" not found"));
-        PeriodicallyPayment periodicallyPayment = new PeriodicallyPayment();
-        periodicallyPayment.setAccount(account);
-        periodicallyPayment.setDescription(periodicallyPaymentDTO.getDescription());
-        periodicallyPayment.setAmount(periodicallyPaymentDTO.getAmount());
-        periodicallyPayment.setPeriod(periodicallyPaymentDTO.getPeriod());
-        periodicallyPaymentRepository.save(periodicallyPayment);
+    public ApiResponse<Object> createPeriodicallyPayment(PeriodicallyPaymentDTO periodicallyPaymentDTO) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(periodicallyPaymentDTO.getAccountId());
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Account account = optionalAccount.get();
+            PeriodicallyPayment periodicallyPayment = new PeriodicallyPayment();
+            periodicallyPayment.setAccount(account);
+            periodicallyPayment.setDescription(periodicallyPaymentDTO.getDescription());
+            periodicallyPayment.setAmount(periodicallyPaymentDTO.getAmount());
+            periodicallyPayment.setPeriod(periodicallyPaymentDTO.getPeriod());
+            periodicallyPaymentRepository.save(periodicallyPayment);
 
-        return toPeriodicallyPaymentDTO(periodicallyPayment);
+            return new ApiResponse<>(toPeriodicallyPaymentDTO(periodicallyPayment), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public PeriodicallyPaymentDTO updatePeriodicallyPayment(Long id, PeriodicallyPaymentUpdateDTO periodicallyPaymentUpdateDTO){
-        PeriodicallyPayment periodicallyPayment = periodicallyPaymentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Payment with id:" + id + "not found"));
+    public ApiResponse<Object> updatePeriodicallyPayment(Long id, PeriodicallyPaymentUpdateDTO periodicallyPaymentUpdateDTO){
+        try{
+            Optional<PeriodicallyPayment> optionalPeriodicallyPayment = periodicallyPaymentRepository.findById(id);
+            if(optionalPeriodicallyPayment.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            PeriodicallyPayment periodicallyPayment = optionalPeriodicallyPayment.get();
 
-        periodicallyPayment.setAmount(periodicallyPaymentUpdateDTO.getAmount());
-        periodicallyPayment.setStatus(periodicallyPaymentUpdateDTO.getStatus());
-        periodicallyPaymentRepository.save(periodicallyPayment);
+            periodicallyPayment.setAmount(periodicallyPaymentUpdateDTO.getAmount());
+            periodicallyPayment.setStatus(periodicallyPaymentUpdateDTO.getStatus());
+            periodicallyPaymentRepository.save(periodicallyPayment);
+            return new ApiResponse<>(toPeriodicallyPaymentDTO(periodicallyPayment), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
 
-        return toPeriodicallyPaymentDTO(periodicallyPayment) ;
+
+
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PeriodicallyPaymentDTO getPeriodicallyPaymentById(Long id) {
-        PeriodicallyPayment periodicallyPayment = periodicallyPaymentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Payment with id:" + id + "not found"));
-        return toPeriodicallyPaymentDTO(periodicallyPayment);
+    public ApiResponse<Object> getPeriodicallyPaymentById(Long id) {
+        try {
+            Optional<PeriodicallyPayment> optionalPeriodicallyPayment = periodicallyPaymentRepository.findById(id);
+            if(optionalPeriodicallyPayment.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            PeriodicallyPayment periodicallyPayment = optionalPeriodicallyPayment.get();
+            return new ApiResponse<>(toPeriodicallyPaymentDTO(periodicallyPayment), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PeriodicallyPaymentDTO> getPeriodicallyPaymentByAccountId(Long id, Pageable pageable){
-        Page<PeriodicallyPayment> periodicallyPayment = periodicallyPaymentRepository.findByAccountId(id, pageable);
-        return periodicallyPayment.map(this::toPeriodicallyPaymentDTO) ;
+    public ApiResponse<Object> getPeriodicallyPaymentByAccountId(Long id, Pageable pageable){
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<PeriodicallyPayment> periodicallyPayment = periodicallyPaymentRepository.findByAccountId(id, pageable);
+            return new ApiResponse<>(periodicallyPayment.map(this::toPeriodicallyPaymentDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<PeriodicallyPaymentDTO> getByAccountIdAndStatus(Long accountId, SubscriptionStatus status, Pageable pageable) {
-        Page<PeriodicallyPayment> periodicallyPayment = periodicallyPaymentRepository.findByAccountIdAndStatus(accountId, status, pageable);
-        return periodicallyPayment.map(this::toPeriodicallyPaymentDTO) ;
+    public ApiResponse<Object> getByAccountIdAndStatus(Long accountId, SubscriptionStatus status, Pageable pageable) {
+        try {
+            Page<PeriodicallyPayment> periodicallyPayment = periodicallyPaymentRepository.findByAccountIdAndStatus(accountId, status, pageable);
+            return new ApiResponse<>(periodicallyPayment.map(this::toPeriodicallyPaymentDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override

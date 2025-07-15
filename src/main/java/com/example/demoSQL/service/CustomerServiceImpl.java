@@ -8,14 +8,13 @@ import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.CustomerType;
-import com.example.demoSQL.enums.ErrorMessage;
+import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.enums.UserRole;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -63,11 +62,11 @@ public class CustomerServiceImpl implements CustomerService {
             customerRepository.save(customer);
 
 //        gotta do this later
-            return new ApiResponse<>(toCustomerResponse(customer), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (RuntimeException e){
-            return new ApiResponse<>(ErrorMessage.ALREADY_EXISTED.getCode(), ErrorMessage.ALREADY_EXISTED.getMessage());
+            return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
         } catch (Exception e){
-            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
 
 
@@ -95,11 +94,11 @@ public class CustomerServiceImpl implements CustomerService {
             }
             Customer updatedCustomer = customerRepository.save(existingCustomer);
 //        later
-            return new ApiResponse<>(toCustomerResponse(updatedCustomer), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(toCustomerResponse(updatedCustomer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e){
-            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
 
     }
@@ -110,11 +109,11 @@ public class CustomerServiceImpl implements CustomerService {
     public ApiResponse<Object> getCustomerById(Long id){
         try {
             Customer customer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
-            return new ApiResponse<>(toCustomerResponse(customer), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ErrorMessage.NOT_FOUND.getCode(), ErrorMessage.NOT_FOUND.getMessage());
+            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e){
-            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
 
     }
@@ -125,9 +124,9 @@ public class CustomerServiceImpl implements CustomerService {
     public ApiResponse<Object> getAll(Pageable pageable){
         try {
             Page<Customer> customerPage = customerRepository.findAll(pageable);
-            return new ApiResponse<>(customerPage.map(this::toCustomerResponse), ErrorMessage.SUCCESS.getCode(), ErrorMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(customerPage.map(this::toCustomerResponse), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
-            return new ApiResponse<>(ErrorMessage.FAIL.getCode(), ErrorMessage.FAIL.getMessage());
+            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
     }
 

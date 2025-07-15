@@ -75,13 +75,13 @@ public class SecurityConfig {
                     .requestMatchers("swagger-resources/**").permitAll()
                     .requestMatchers("webjars/**").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/customers").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/customers").permitAll()
-                    .requestMatchers("/api/customers/{id}").permitAll()
-                    .requestMatchers("/api/accounts/status/**").permitAll()
-                    .requestMatchers("/api/transactions/**").permitAll()
-                    .requestMatchers("/api/accountstatushistory/**").permitAll()
-                    .requestMatchers("/api/payments/**").permitAll()
-                    .anyRequest().permitAll());
+                    .requestMatchers(HttpMethod.GET, "/api/customers").hasAnyRole("ADMIN")
+                    .requestMatchers("/api/customers/{id}").authenticated()
+                    .requestMatchers("/api/accounts/status/**").hasRole("ADMIN")
+                    .requestMatchers("/api/transactions/**").authenticated()
+                    .requestMatchers("/api/accountstatushistory/**").authenticated()
+                    .requestMatchers("/api/payments/**").authenticated()
+                    .anyRequest().authenticated());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

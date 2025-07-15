@@ -5,7 +5,7 @@ import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public enum ErrorMessage {
+public enum ReturnMessage {
     SUCCESS("00", "Success"),
     FAIL("01", "Fail"),
     UNAUTHORIZED("02", "Unauthorized"),

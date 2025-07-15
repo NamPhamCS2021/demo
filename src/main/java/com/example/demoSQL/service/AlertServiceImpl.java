@@ -1,11 +1,14 @@
 package com.example.demoSQL.service;
 
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.alert.AlertDTO;
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Alert;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.AlertStatus;
 import com.example.demoSQL.enums.AlertType;
+import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AlertRepository;
 import com.example.demoSQL.repository.TransactionRepository;
@@ -20,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -93,9 +97,14 @@ public class AlertServiceImpl implements AlertService {
     }
 
     @Override
-    public Page<AlertDTO> getAll(Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findAll(pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getAll(Pageable pageable) {
+        try{
+            Page<Alert> alerts = alertRepository.findAll(pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     private Alert createAlert(Transaction transaction, String description, AlertType type) {
@@ -103,56 +112,127 @@ public class AlertServiceImpl implements AlertService {
         alert.setTransaction(transaction);
         alert.setDescription(description);
         alert.setType(type);
-
+        alertRepository.save(alert);
         return alert;
     }
     @Override
-    public Page<AlertDTO> getByTransactionId(Long transactionId, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByTransactionId(transactionId, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByTransactionId(Long transactionId, Pageable pageable) {
+        try{
+            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
+            if(optionalTransaction.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Page<Alert> alerts = alertRepository.findByTransactionId(transactionId, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public Page<AlertDTO> getByTransactionIdAndType(Long transactionId, AlertType type, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByTransactionIdAndType(transactionId, type, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByTransactionIdAndType(Long transactionId, AlertType type, Pageable pageable) {
+        try{
+            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
+            if(optionalTransaction.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByTransactionIdAndType(transactionId, type, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public Page<AlertDTO> getByTransactionIdAndStatus(Long transactionId, AlertStatus status, Pageable pageable){
+    public ApiResponse<Object> getByTransactionIdAndStatus(Long transactionId, AlertStatus status, Pageable pageable){
+        try{
+            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
+            if(optionalTransaction.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByTransactionIdAndStatus(transactionId, status, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
 
-        Page<Alert> alerts = alertRepository.findByTransactionIdAndStatus(transactionId, status, pageable);
-        return alerts.map(this::toAlertDTO);
     }
 
     @Override
-    public Page<AlertDTO> getByTransactionIdAndTypeAndStatus(Long transactionId, AlertType type, AlertStatus status, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByTransactionIdAndTypeAndStatus(transactionId, type, status, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByTransactionIdAndTypeAndStatus(Long transactionId, AlertType type, AlertStatus status, Pageable pageable) {
+        try{
+            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
+            if(optionalTransaction.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByTransactionIdAndTypeAndStatus(transactionId, type, status, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public Page<AlertDTO> getByAccountId(Long accountId, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByAccountId(accountId, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByAccountId(Long accountId, Pageable pageable) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(accountId);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByAccountId(accountId, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public Page<AlertDTO> getByAccountIdAndType(Long accountId, AlertType type, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByAccountIdAndType(accountId, type, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByAccountIdAndType(Long accountId, AlertType type, Pageable pageable) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(accountId);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByAccountIdAndType(accountId, type, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public Page<AlertDTO> getByAccountIdAndStatus(Long accountId, AlertStatus status, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByAccountIdAndStatus(accountId, status, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByAccountIdAndStatus(Long accountId, AlertStatus status, Pageable pageable) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(accountId);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByAccountIdAndStatus(accountId, status, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+
     }
 
     @Override
-    public Page<AlertDTO> getByAccountIdAndTypeAndStatus(Long accountId, AlertType type, AlertStatus status, Pageable pageable) {
-        Page<Alert> alerts = alertRepository.findByAccountIdAndTypeAndStatus(accountId, type, status, pageable);
-        return alerts.map(this::toAlertDTO);
+    public ApiResponse<Object> getByAccountIdAndTypeAndStatus(Long accountId, AlertType type, AlertStatus status, Pageable pageable) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(accountId);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByAccountIdAndTypeAndStatus(accountId, type, status, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
     }
 
     private AlertDTO toAlertDTO(Alert alert) {

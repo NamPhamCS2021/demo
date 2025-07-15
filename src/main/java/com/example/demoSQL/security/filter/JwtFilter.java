@@ -7,8 +7,10 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,26 +22,23 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private UserDetailsServiceImpl userDetailService;
+    private final UserDetailsServiceImpl userDetailService;
 
-    public JwtFilter(JwtUtil jwtUtil, UserDetailsServiceImpl userDetailService) {
-        this.jwtUtil = jwtUtil;
-        this.userDetailService = userDetailService;
-    }
 
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
+        String username = "unathenticated";
         try{
+
             String authToken =extractToken(request);
             if(StringUtils.hasText(authToken) && jwtUtil.validateJwtToken(authToken)){
-                String username = jwtUtil.getUserNameFromJwtToken(authToken);
+                username = jwtUtil.getUserNameFromJwtToken(authToken);
 
                 UserDetails userDetail = userDetailService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetail, null, userDetail.getAuthorities());
@@ -48,9 +47,17 @@ public class JwtFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e.getMessage());
         }
+        MDC.put("username", username);
+        MDC.put("ip", request.getRemoteAddr());
+        MDC.put("method", request.getMethod());
+        MDC.put("url", request.getRequestURI());
 
+        try {
+            filterChain.doFilter(request, response);
+        } finally {
+            MDC.clear();
+        }
 
-        filterChain.doFilter(request, response);
     }
 
     private String extractToken(HttpServletRequest request) {

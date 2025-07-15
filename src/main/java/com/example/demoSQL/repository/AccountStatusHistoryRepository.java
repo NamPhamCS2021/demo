@@ -15,11 +15,8 @@ public interface AccountStatusHistoryRepository extends JpaRepository<AccountSta
     boolean existsByAccountId(Long accountId);
     @Query("SELECT a FROM AccountStatusHistory a WHERE a.account.id = :accountId")
     Page<AccountStatusHistory> findByAccountId(Long accountId, Pageable pageable);
-    @Query("SELECT a FROM AccountStatusHistory a WHERE a.account.accountNumber = :accountNumber")
-    Page<AccountStatusHistory> findByAccountNumber(String accountNumber, Pageable pageable);
     @Query("SELECT a FROM AccountStatusHistory a WHERE (a.account.id = :accountId ) AND (a.timestamp BETWEEN :start AND :end)")
     Page<AccountStatusHistory> findBetweenByAccountId(Long accountId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
-    @Query("SELECT a FROM AccountStatusHistory a WHERE (a.account.accountNumber = :accountNumber ) AND (a.timestamp BETWEEN :start AND :end)")
-    Page<AccountStatusHistory> findBetweenByAccountNumber(String accountNumber, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
+
 
 }

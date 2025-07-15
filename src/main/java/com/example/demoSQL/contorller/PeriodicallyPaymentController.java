@@ -1,21 +1,23 @@
 package com.example.demoSQL.contorller;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentDTO;
+
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentUpdateDTO;
 import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.service.PeriodicallyPaymentService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.*;
+
+@SecurityRequirement(name = "Bearer Authentication")
 @Repository
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -23,23 +25,31 @@ public class PeriodicallyPaymentController {
 
     private final PeriodicallyPaymentService periodicallyPaymentService;
 
+    @PreAuthorize("@authSecurity.isOwnerOfPayment(#id)")
     @GetMapping("/{id}")
-    public ResponseEntity<PeriodicallyPaymentDTO> findById(@PathVariable Long id){
-        PeriodicallyPaymentDTO payment = periodicallyPaymentService.getPeriodicallyPaymentById(id);
-        return ResponseEntity.ok(payment);
+    public ApiResponse<Object> findById(@PathVariable Long id){
+        return periodicallyPaymentService.getPeriodicallyPaymentById(id);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @GetMapping("/account/{id}")
-    public ResponseEntity<Page<PeriodicallyPaymentDTO>> findByAccountId(@PathVariable Long id,
+    public ApiResponse<Object> findByAccountId(@PathVariable Long id,
                                                                         @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<PeriodicallyPaymentDTO> payment = periodicallyPaymentService.getPeriodicallyPaymentByAccountId(id, pageable);
-        return ResponseEntity.ok(payment);
+        return periodicallyPaymentService.getPeriodicallyPaymentByAccountId(id, pageable);
     }
+
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @GetMapping("/account/status")
-    public ResponseEntity<Page<PeriodicallyPaymentDTO>> findByAccountIdAndStatus(@RequestParam Long id,
-                                                                                 @RequestParam SubscriptionStatus status,
-                                                                                 @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<PeriodicallyPaymentDTO> payment = periodicallyPaymentService.getByAccountIdAndStatus(id, status, pageable);
-        return ResponseEntity.ok(payment);
+    public ApiResponse<Object> findByAccountIdAndStatus(@RequestParam Long id,
+                                                        @RequestParam SubscriptionStatus status,
+                                                        @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
+        return periodicallyPaymentService.getByAccountIdAndStatus(id, status, pageable);
+
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ApiResponse<Object> update(@PathVariable Long id, @RequestBody PeriodicallyPaymentUpdateDTO payment){
+        return periodicallyPaymentService.updatePeriodicallyPayment(id, payment);
     }
 }

@@ -19,8 +19,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -34,11 +36,17 @@ public class TransactionServiceImpl implements TransactionService {
     private final AccountRepository accountRepository;
 
     @Override
+    @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
     public ApiResponse<Object> deposit(TransactionCreateDTO transactionCreateDTO) {
         try{
-            Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
+            Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
 
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
 
             if(account.getStatus() != AccountStatus.ACTIVE){
                 return new ApiResponse<>(ReturnMessage.INACTIVE.getCode(), ReturnMessage.INACTIVE.getMessage());
@@ -57,16 +65,24 @@ public class TransactionServiceImpl implements TransactionService {
             return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
 
         } catch(Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
 
     }
 
     @Override
+    @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
     public ApiResponse<Object> withdraw(TransactionCreateDTO transactionCreateDTO) {
         try{
-            Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
+            Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
+
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
 
             if(account.getStatus() != AccountStatus.ACTIVE){
                 return new ApiResponse<>(ReturnMessage.INACTIVE.getCode(), ReturnMessage.INACTIVE.getMessage());
@@ -88,20 +104,27 @@ public class TransactionServiceImpl implements TransactionService {
             account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
             transactionRepository.save(transaction);
             return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e) {
-            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
 
     }
 
     @Override
+    @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
     public ApiResponse<Object> transfer(TransactionCreateDTO transactionCreateDTO){
         try{
-            Account account = accountRepository.findById(transactionCreateDTO.getAccountId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getAccountId()+" not found"));
-            Account receiver = accountRepository.findById(transactionCreateDTO.getReceiverId()).orElseThrow(()->new EntityNotFoundException("Account with id "+transactionCreateDTO.getReceiverId()+" not found"));
+            Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
+            Optional<Account> optionalReceiver = accountRepository.findById(transactionCreateDTO.getReceiverId());
+
+            if(optionalAccount.isEmpty() || optionalReceiver.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
+            Account receiver = optionalReceiver.get();
 
             if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
                 return new ApiResponse<>(ReturnMessage.INSUFFICIENT_BALANCE.getCode(), ReturnMessage.INSUFFICIENT_BALANCE.getMessage());
@@ -125,12 +148,10 @@ public class TransactionServiceImpl implements TransactionService {
             receiver.setBalance(receiver.getBalance().add(transactionCreateDTO.getAmount()));
             transactionRepository.save(transaction);
             return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e) {
-            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-
     }
 
     @Override
@@ -138,10 +159,15 @@ public class TransactionServiceImpl implements TransactionService {
     @Cacheable(value = "transactions", key = "#id")
     public ApiResponse<Object> getTransaction(Long id){
         try{
-            Transaction transaction = transactionRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Transaction with id "+id+" not found"));
+            Optional<Transaction> optionalTransaction = transactionRepository.findById(id);
+
+            if(optionalTransaction.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Transaction transaction = optionalTransaction.get();
+
             return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e) {
-            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }

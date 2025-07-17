@@ -23,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -43,8 +45,7 @@ public class CustomerServiceImpl implements CustomerService {
         try{
             if(customerRepository.existsByEmail(customerCreateDTO.getEmail()) ||
                     customerRepository.existsByPhoneNumber(customerCreateDTO.getPhoneNumber())){
-                throw new RuntimeException("Customer with this email or phone is already exists");
-            }
+                return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());            }
 
             Customer customer = new Customer();
             customer.setFirstName(customerCreateDTO.getFirstName());
@@ -63,8 +64,6 @@ public class CustomerServiceImpl implements CustomerService {
 
 //        gotta do this later
             return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (RuntimeException e){
-            return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -76,15 +75,21 @@ public class CustomerServiceImpl implements CustomerService {
     @CachePut(value = "customers", key = "#customerUpdateDTO.email")
     public ApiResponse<Object> updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
         try{
-            Customer existingCustomer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
+            Optional<Customer> optionalCustomer = customerRepository.findById(id);
+
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Customer existingCustomer = optionalCustomer.get();
 
             if(existingCustomer.getEmail() != null && existingCustomer.getEmail().equals(customerUpdateDTO.getEmail()) &&
                     customerRepository.existsByEmailAndId(customerUpdateDTO.getEmail(),id)){
-                throw new EntityNotFoundException("Customer with this email is already exists");
+                return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
             }
             if(existingCustomer.getPhoneNumber() != null && existingCustomer.getPhoneNumber().equals(customerUpdateDTO.getEmail()) &&
                     customerRepository.existsByPhoneNumberAndId(customerUpdateDTO.getPhoneNumber(), id)) {
-                throw new EntityNotFoundException("Customer with this phone number is already exists");
+                return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
             }
             if(customerUpdateDTO.getEmail() != null){
                 existingCustomer.setEmail(customerUpdateDTO.getEmail());
@@ -95,8 +100,6 @@ public class CustomerServiceImpl implements CustomerService {
             Customer updatedCustomer = customerRepository.save(existingCustomer);
 //        later
             return new ApiResponse<>(toCustomerResponse(updatedCustomer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -108,10 +111,12 @@ public class CustomerServiceImpl implements CustomerService {
     @Cacheable(value = "customers", key = "#id")
     public ApiResponse<Object> getCustomerById(Long id){
         try {
-            Customer customer = customerRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Customer with id "+id+" not found"));
+            Optional<Customer> optionalCustomer = customerRepository.findById(id);
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalCustomer.get();
             return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (EntityNotFoundException e){
-            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }

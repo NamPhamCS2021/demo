@@ -28,29 +28,25 @@ public class CustomerController {
 
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> createCustomer(@Valid @RequestBody CustomerCreateDTO customerCreateDTO){
-        ApiResponse<Object> createdDTO = customerServiceImpl.createCustomer(customerCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDTO);
+    public ApiResponse<Object> createCustomer(@Valid @RequestBody CustomerCreateDTO customerCreateDTO){
+        return customerServiceImpl.createCustomer(customerCreateDTO);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Object>> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerUpdateDTO customerUpdateDTO){
-        ApiResponse<Object> updatedCustomer = customerServiceImpl.updateCustomer(id,customerUpdateDTO);
-        return ResponseEntity.ok(updatedCustomer);
+    public ApiResponse<Object> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerUpdateDTO customerUpdateDTO){
+        return customerServiceImpl.updateCustomer(id,customerUpdateDTO);
     }
     @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Object>> getCustomerById(@PathVariable Long id){
+    public ApiResponse<Object> getCustomerById(@PathVariable Long id){
         try{
             ApiResponse<Object> customerDTO = customerServiceImpl.getCustomerById(id);
-            return ResponseEntity.ok(
-                new ApiResponse<>(customerDTO, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage())
-            );
+            return new ApiResponse<>(customerDTO, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>(e.getMessage(), ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage()));
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         }
 
 
@@ -59,9 +55,8 @@ public class CustomerController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getAllCustomer
+    public ApiResponse<Object> getAllCustomer
             (@PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        ApiResponse<Object> customerPage = customerServiceImpl.getAll(pageable);
-        return ResponseEntity.ok(customerPage);
+        return customerServiceImpl.getAll(pageable);
     }
 }

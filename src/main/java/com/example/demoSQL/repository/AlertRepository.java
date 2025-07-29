@@ -9,12 +9,13 @@ import com.example.demoSQL.enums.AlertType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 @Repository
-public interface AlertRepository extends JpaRepository<Alert, Long> {
+public interface AlertRepository extends JpaRepository<Alert, Long>, JpaSpecificationExecutor<Alert> {
     @Query("SELECT COUNT(a) > 0 FROM Alert a WHERE a.transaction.account.id = :accountId")
     Boolean existsByAccountId(Long accountId);
     Page<Alert> findByTransactionId(Long transactionId, Pageable pageable);

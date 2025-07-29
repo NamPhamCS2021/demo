@@ -87,14 +87,14 @@ public class ReportServiceImpl implements ReportService{
     @Override
     public Map<String, Object> generateAccountReport(LocalDateTime start, LocalDateTime end) {
         Long totalAccount = accountRepository.countAllAccounts();
-        Long corporalAccounts = accountRepository.countAllAccountsByType(CustomerType.CORPORAL);
+        Long corporalAccounts = accountRepository.countAllAccountsByType(CustomerType.CORPORATE);
         Long personalAccounts = accountRepository.countAllAccountsByType(CustomerType.PERSONAL);
         Long temporaryAccounts = accountRepository.countAllAccountsByType(CustomerType.TEMPORARY);
         Long activeAccount = accountRepository.countAllAccountsByStatus(AccountStatus.ACTIVE);
 
         Map<String, Object> report = new HashMap<>();
         report.put("total accounts", totalAccount);
-        report.put("corporal accounts", corporalAccounts);
+        report.put("corporate accounts", corporalAccounts);
         report.put("personal accounts", personalAccounts);
         report.put("temporary accounts", temporaryAccounts);
         report.put("active accounts", activeAccount);

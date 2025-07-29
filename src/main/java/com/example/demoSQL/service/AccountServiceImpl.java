@@ -1,10 +1,7 @@
 package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
-import com.example.demoSQL.dto.account.AccountCreateDTO;
-import com.example.demoSQL.dto.account.AccountResponseDTO;
-import com.example.demoSQL.dto.account.AccountUpdateLimitDTO;
-import com.example.demoSQL.dto.account.AccountUpdateStatusDTO;
+import com.example.demoSQL.dto.account.*;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.entity.Customer;
@@ -14,18 +11,22 @@ import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AccountStatusHistoryRepository;
 import com.example.demoSQL.repository.CustomerRepository;
+import com.example.demoSQL.specification.AccountSpecification;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @Transactional
 public class AccountServiceImpl implements AccountService {
@@ -120,7 +121,12 @@ public class AccountServiceImpl implements AccountService {
     @Cacheable(value = "accounts", key = "#id")
     public ApiResponse<Object> getAccountById(Long id){
         try{
-            Account account = accountRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Account with id "+id+" not found"));
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Account account = optionalAccount.get();
             return new ApiResponse<>(toAccountResponseDTO(account), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -185,6 +191,62 @@ public class AccountServiceImpl implements AccountService {
             return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "accounts")
+    public ApiResponse<Object> searchAccounts(AccountSearchDTO dto, Pageable pageable) {
+        try{
+            Specification<Account> spec = AccountSpecification.hasCustomer(dto.getCustomerId())
+                    .and(AccountSpecification.hasStatus(dto.getStatus()))
+                    .and(AccountSpecification.hasMaxLimit(dto.getMaxLimit()))
+                    .and(AccountSpecification.hasMinLimit(dto.getMinLimit()))
+                    .and(AccountSpecification.hasMaxBalance(dto.getMaxBalance()))
+                    .and(AccountSpecification.hasMinBalance(dto.getMinBalance()))
+                    .and(AccountSpecification.createdBefore(dto.getFrom()))
+                    .and(AccountSpecification.createdAfter(dto.getTo()));
+            return new ApiResponse<>(accountRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "accounts")
+    public ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO dto, Pageable pageable) {
+        try {
+            log.info("Search DTO - status: {}, minBalance: {}, maxBalance: {}, minLimit: {}, maxLimit: {}, from: {}, to: {}",
+                    dto.getStatus(), dto.getMinBalance(), dto.getMaxBalance(),
+                    dto.getMinLimit(), dto.getMaxLimit(), dto.getFrom(), dto.getTo());
+
+            Specification<Account> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(AccountSpecification.hasCustomer(id));
+            spec = spec.and(AccountSpecification.hasStatus(dto.getStatus()));
+            spec = spec.and(AccountSpecification.hasMaxLimit(dto.getMaxLimit()));
+            spec = spec.and(AccountSpecification.hasMinLimit(dto.getMinLimit()));
+            spec = spec.and(AccountSpecification.hasMaxBalance(dto.getMaxBalance()));
+            spec = spec.and(AccountSpecification.hasMinBalance(dto.getMinBalance()));
+            spec = spec.and(AccountSpecification.createdBefore(dto.getTo()));
+            spec = spec.and(AccountSpecification.createdAfter(dto.getFrom()));
+
+            log.debug("Searching with spec: {}", spec);  // safe logging
+
+            return new ApiResponse<>(
+                    accountRepository.findAll(spec, pageable),
+                    ReturnMessage.SUCCESS.getCode(),
+                    ReturnMessage.SUCCESS.getMessage()
+            );
+        } catch (Exception e) {
+            log.error("Error during self account search", e);
+            return new ApiResponse<>(
+                    e.getMessage(),
+                    ReturnMessage.FAIL.getCode(),
+                    ReturnMessage.FAIL.getMessage()
+            );
         }
     }
 

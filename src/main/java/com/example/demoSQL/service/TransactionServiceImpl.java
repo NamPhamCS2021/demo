@@ -1,6 +1,9 @@
 package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
+import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
+import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
+import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
@@ -10,13 +13,16 @@ import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.repository.AccountRepository;
+import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.repository.TransactionRepository;
+import com.example.demoSQL.specification.TransactionSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -34,6 +40,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
 
     private final AccountRepository accountRepository;
+
+    private final CustomerRepository customerRepository;
 
     @Override
     @Transactional
@@ -176,41 +184,48 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "transactionsByAccount", key = "#accountId")
-    public ApiResponse<Object> getTransactionsByAccountId(Long accountId, Pageable pageable)
-    {
+    @Cacheable(value = "transactions")
+    public ApiResponse<Object> searchTransactions(TransactionSearchDTO dto, Pageable pageable){
         try{
-            Page<Transaction> transactions = transactionRepository.findByAccountId(accountId, pageable);
-            return new ApiResponse<>(transactions.map(this::toTransactionResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+                Specification<Transaction> spec =
+                        TransactionSpecification.hasType(dto.getType())
+                                .and(TransactionSpecification.hasAccountId(dto.getAccountId()))
+                                .and(TransactionSpecification.hasReceiverId(dto.getReceiverId()))
+                                .and(TransactionSpecification.hasMinAmount(dto.getMinAmount()))
+                                .and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()))
+                                .and(TransactionSpecification.occurredBefore(dto.getFrom()))
+                                .and(TransactionSpecification.occurredAfter(dto.getTo()))
+                                .and(TransactionSpecification.hasChecked(dto.getChecked()))
+                                .and(TransactionSpecification.hasLocation(dto.getLocation()));
+                return new ApiResponse<>(transactionRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-
     }
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "transactionsByType", key = "#type")
-    public ApiResponse<Object> getTransactionsByType(TransactionType type, Pageable pageable)
-    {
+    @Cacheable(value = "transactions")
+    public ApiResponse<Object> selfTransactionSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable){
         try{
-            Page<Transaction> transactions = transactionRepository.findByType(type, pageable);
-            return new ApiResponse<>(transactions.map(this::toTransactionResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Specification<Transaction> baseSpec = TransactionSpecification.hasAccountId(id)
+                    .or(TransactionSpecification.hasReceiverId(id));
 
-    }
+            Specification<Transaction> spec = baseSpec
+                    .and(TransactionSpecification.hasMinAmount(dto.getMinAmount()))
+                    .and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()))
+                    .and(TransactionSpecification.hasLocation(dto.getLocation()))
+                    .and(TransactionSpecification.occurredBefore(dto.getTo()))
+                    .and(TransactionSpecification.occurredAfter(dto.getFrom()))
+                    .and(TransactionSpecification.hasChecked(dto.getChecked()));
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "transactionsByAccountAndType", key = "#accountId + '-' + #type")
-    public ApiResponse<Object> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable)
-    {
-        try{
-            Page<Transaction> transactions = transactionRepository.findByAccountIdAndType(accountId, type, pageable);
-            return new ApiResponse<>(transactions.map(this::toTransactionResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
+
+            return new ApiResponse<>(transactionRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
     }

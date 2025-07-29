@@ -7,6 +7,7 @@ import org.springframework.cglib.core.Local;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,7 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface TransactionRepository extends JpaRepository<Transaction, Long> {
+public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 
     List<Transaction> findByAccountId(Long accountId);
     @Query("Select t FROM Transaction t WHERE t.account.id = :accountId OR t.receiver.id = :accountId")
@@ -22,7 +23,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Page<Transaction> findByType(TransactionType type, Pageable pageable);
     Page<Transaction> findByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
     //Page<Transaction> findByReceiverId(Long receiverId, Pageable pageable);
-
+    @Query("SELECT t.location AS location, COUNT(t) AS count FROM Transaction t GROUP BY t.location")
+    List<LocationCount> countTransactionsByLocation();
     @Query("SELECT t FROM Transaction t WHERE t.checked = false")
     List<Transaction> findByCheckedFalse();
 
@@ -57,8 +59,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT Count(t) FROM Transaction t WHERE t.account.accountNumber = :accountNumber AND t.timestamp BETWEEN :start AND :end")
     Long countBetweenTimeByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT t.location AS location, COUNT(t) AS count FROM Transaction t GROUP BY t.location")
-    List<LocationCount> countTransactionsByLocation();
+
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.timestamp BETWEEN :start AND :end)")
     Long countBetweenTimeByAccountId(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end);

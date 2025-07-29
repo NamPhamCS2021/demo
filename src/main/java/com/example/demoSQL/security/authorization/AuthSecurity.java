@@ -1,8 +1,6 @@
 package com.example.demoSQL.security.authorization;
 
 import com.example.demoSQL.repository.*;
-import com.example.demoSQL.security.repository.UserRepository;
-import com.example.demoSQL.security.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -15,7 +13,7 @@ public class AuthSecurity {
 
     private final AccountRepository accountRepository;
 
-    private final PeriodicallyPaymentRepository periodicallyPaymentRepository;
+    private final PeriodicalPaymentRepository periodicalPaymentRepository;
 
     private final TransactionRepository transactionRepository;
 
@@ -54,17 +52,22 @@ public class AuthSecurity {
         if(isAdmin()) {
             return true;
         }
-        return periodicallyPaymentRepository.findById(paymentId)
+        return periodicalPaymentRepository.findById(paymentId)
                 .map(p -> p.getAccount().getCustomer().getEmail().equals(getCurrentEmail()))
                 .orElse(false);
     }
 
-    public boolean isOwnerOfTransaction(Long userId) {
+    public boolean isOwnerOfTransaction(Long transactionId) {
         if(isAdmin()) {
             return true;
         }
-        return transactionRepository.findById(userId)
-                .map(t -> t.getAccount().getCustomer().getEmail().equals(getCurrentEmail()))
+        return transactionRepository.findById(transactionId)
+                .map(t -> {
+                    String currentEmail = getCurrentEmail();
+                    String senderMail = t.getAccount().getCustomer().getEmail();
+                    String rerceiverMail = t.getReceiver() != null ? t.getReceiver().getCustomer().getEmail() : null;
+                    return currentEmail.equals(senderMail) || currentEmail.equals(rerceiverMail);
+                })
                 .orElse(false);
     }
     public boolean isOwnerOfAccountStatusHistory(Long userId) {

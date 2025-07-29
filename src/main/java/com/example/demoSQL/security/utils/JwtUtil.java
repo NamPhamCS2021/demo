@@ -19,7 +19,7 @@ public class JwtUtil {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
     private String jwtSecret = "thisisthemostsecuredkeyever1234567890abcdefghijklmnopqrstuvwxyz";
 
-    private int jwtExpirationInMs = 720000;
+    private final int jwtExpirationInMs = 86400000;
 
     public String generateJwtToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();

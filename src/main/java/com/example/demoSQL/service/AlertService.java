@@ -2,6 +2,8 @@ package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.alert.AlertDTO;
+import com.example.demoSQL.dto.alert.AlertSearchDTO;
+import com.example.demoSQL.dto.alert.AlertUserSearchDTO;
 import com.example.demoSQL.entity.Alert;
 import com.example.demoSQL.enums.AlertStatus;
 import com.example.demoSQL.enums.AlertType;
@@ -19,4 +21,6 @@ public interface AlertService {
     ApiResponse<Object> getByAccountIdAndType(Long accountId, AlertType type, Pageable pageable);
     ApiResponse<Object> getByAccountIdAndStatus(Long accountId, AlertStatus status, Pageable pageable);
     ApiResponse<Object> getByAccountIdAndTypeAndStatus(Long accountId, AlertType type, AlertStatus status, Pageable pageable);
+    ApiResponse<Object> search(AlertSearchDTO dto, Pageable pageable);
+    ApiResponse<Object> selfSearch(Long id, AlertUserSearchDTO dto, Pageable pageable);
 }

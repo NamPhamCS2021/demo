@@ -1,6 +1,8 @@
 package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
+import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
+import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
@@ -20,11 +22,15 @@ public interface TransactionService {
 
     ApiResponse<Object> getTransaction(Long id);
 
-    ApiResponse<Object> getTransactionsByAccountId(Long accountId, Pageable pageable);
-
-    ApiResponse<Object> getTransactionsByType(TransactionType type, Pageable pageable);
-    ApiResponse<Object> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
+//    ApiResponse<Object> getTransactionsByAccountId(Long accountId, Pageable pageable);
+//
+//    ApiResponse<Object> getTransactionsByType(TransactionType type, Pageable pageable);
+//    ApiResponse<Object> getTransactionsByAccountIdAndType(Long accountId, TransactionType type, Pageable pageable);
 
     ApiResponse<Object> countTransactionsByLocation();
+
+    ApiResponse<Object> searchTransactions(TransactionSearchDTO dto, Pageable pageable);
+
+    ApiResponse<Object> selfTransactionSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable);
 
 }

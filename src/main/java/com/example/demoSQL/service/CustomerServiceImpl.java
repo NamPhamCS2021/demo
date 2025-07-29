@@ -2,10 +2,7 @@ package com.example.demoSQL.service;
 
 
 import com.example.demoSQL.dto.ApiResponse;
-import com.example.demoSQL.dto.customer.CustomerCreateDTO;
-import com.example.demoSQL.dto.customer.CustomerResponseDTO;
-import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
-import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
+import com.example.demoSQL.dto.customer.*;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.enums.ReturnMessage;
@@ -13,12 +10,14 @@ import com.example.demoSQL.enums.UserRole;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
+import com.example.demoSQL.specification.CustomerSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,9 +42,9 @@ public class CustomerServiceImpl implements CustomerService {
     @CachePut(value = "customers", key = "#customerCreateDTO.email")
     public ApiResponse<Object> createCustomer(CustomerCreateDTO customerCreateDTO){
         try{
-            if(customerRepository.existsByEmail(customerCreateDTO.getEmail()) ||
-                    customerRepository.existsByPhoneNumber(customerCreateDTO.getPhoneNumber())){
-                return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());            }
+            if(customerRepository.existsByPhoneNumberOrEmail(customerCreateDTO.getPhoneNumber(), customerCreateDTO.getEmail())){
+                return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
+            }
 
             Customer customer = new Customer();
             customer.setFirstName(customerCreateDTO.getFirstName());
@@ -83,12 +82,7 @@ public class CustomerServiceImpl implements CustomerService {
 
             Customer existingCustomer = optionalCustomer.get();
 
-            if(existingCustomer.getEmail() != null && existingCustomer.getEmail().equals(customerUpdateDTO.getEmail()) &&
-                    customerRepository.existsByEmailAndId(customerUpdateDTO.getEmail(),id)){
-                return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
-            }
-            if(existingCustomer.getPhoneNumber() != null && existingCustomer.getPhoneNumber().equals(customerUpdateDTO.getEmail()) &&
-                    customerRepository.existsByPhoneNumberAndId(customerUpdateDTO.getPhoneNumber(), id)) {
+            if(customerRepository.existsByPhoneNumberOrEmail(customerUpdateDTO.getPhoneNumber(), customerUpdateDTO.getEmail())){
                 return new ApiResponse<>(ReturnMessage.ALREADY_EXISTED.getCode(), ReturnMessage.ALREADY_EXISTED.getMessage());
             }
             if(customerUpdateDTO.getEmail() != null){
@@ -106,22 +100,6 @@ public class CustomerServiceImpl implements CustomerService {
 
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "customers", key = "#id")
-    public ApiResponse<Object> getCustomerById(Long id){
-        try {
-            Optional<Customer> optionalCustomer = customerRepository.findById(id);
-            if(optionalCustomer.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Customer customer = optionalCustomer.get();
-            return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -135,7 +113,40 @@ public class CustomerServiceImpl implements CustomerService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    @Cacheable(value = "customers", key = "#id")
+    public ApiResponse<Object> getCustomerById(Long id){
+        try{
+            Optional<Customer> optionalCustomer = customerRepository.findById(id);
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalCustomer.get();
+            return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
 
+    @Override
+    @Cacheable(value = "customers", key = "#dto.toString() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
+    public ApiResponse<Object> searchCustomers(CustomerSearchDTO dto, Pageable pageable) {
+        try{
+            Specification<Customer> spec =
+                    CustomerSpecification.hasFirstName(dto.getFirstName())
+                            .and(CustomerSpecification.hasLastName(dto.getLastName()))
+                            .and(CustomerSpecification.hasEmail(dto.getEmail()))
+                            .and(CustomerSpecification.hasPhoneNumber(dto.getPhone()))
+                            .and(CustomerSpecification.hasType(dto.getType()))
+                            .and(CustomerSpecification.createdBefore(dto.getTo()))
+                            .and(CustomerSpecification.createdAfter(dto.getFrom()));
+
+            return new ApiResponse<>(customerRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
 
     //helper
     private CustomerResponseDTO toCustomerResponse(Customer customer){

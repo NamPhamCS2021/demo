@@ -29,8 +29,7 @@ public class AlertController {
     @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping
     public ApiResponse<Object> getAll(@PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        ApiResponse<Object> apiResponse = alertService.getAll(pageable);
-        return apiResponse;
+        return alertService.getAll(pageable);
     }
 
     @PreAuthorize("@authSecurity.isOwnerOfTransaction(#id)")

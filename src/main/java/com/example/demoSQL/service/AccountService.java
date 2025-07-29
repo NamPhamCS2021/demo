@@ -1,10 +1,7 @@
 package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
-import com.example.demoSQL.dto.account.AccountCreateDTO;
-import com.example.demoSQL.dto.account.AccountResponseDTO;
-import com.example.demoSQL.dto.account.AccountUpdateLimitDTO;
-import com.example.demoSQL.dto.account.AccountUpdateStatusDTO;
+import com.example.demoSQL.dto.account.*;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.enums.AccountStatus;
 import org.springframework.data.domain.Page;
@@ -19,5 +16,7 @@ public interface AccountService {
     ApiResponse<Object> getAccountById(Long id);
     ApiResponse<Object> getAllAccounts(Pageable pageable);
     ApiResponse<Object> getAccountsByStatus(AccountStatus status, Pageable pageable);
+    ApiResponse<Object> searchAccounts(AccountSearchDTO accountSearchDTO, Pageable pageable);
+    ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO accountUserSearchDTO, Pageable pageable);
 
 }

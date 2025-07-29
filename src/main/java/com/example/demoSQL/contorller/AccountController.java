@@ -1,21 +1,15 @@
 package com.example.demoSQL.contorller;
 
 import com.example.demoSQL.dto.ApiResponse;
-import com.example.demoSQL.dto.account.AccountCreateDTO;
-import com.example.demoSQL.dto.account.AccountResponseDTO;
-import com.example.demoSQL.dto.account.AccountUpdateLimitDTO;
-import com.example.demoSQL.dto.account.AccountUpdateStatusDTO;
+import com.example.demoSQL.dto.account.*;
 import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.service.AccountService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/accounts")
-@Validated
 @RequiredArgsConstructor
 public class AccountController {
 
@@ -61,14 +54,14 @@ public class AccountController {
         return accountService.getAllAccounts(pageable);
     }
 
-    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
+    @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
     @GetMapping("customer/{customerId}")
     public ApiResponse<Object> getAccountsByCustomerId(@PathVariable Long customerId,
                                                                        @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
         return accountService.getAccountByCustomerId(customerId, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
+    @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
     @GetMapping("customer/status/{customerId}")
     public ApiResponse<Object> getAccountsByCustomerIdAndStatus(@PathVariable Long customerId,@RequestParam AccountStatus status,
                                                                                 @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
@@ -80,6 +73,18 @@ public class AccountController {
             @PathVariable AccountStatus status,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
         return accountService.getAccountsByStatus(status, pageable);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/search")
+    public ApiResponse<Object> searchAccounts(@Valid @RequestBody AccountSearchDTO accountSearchDTO, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
+        return accountService.searchAccounts(accountSearchDTO, pageable);
+    }
+
+    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
+    @PostMapping("/search/{id}")
+    public ApiResponse<Object> searchSelfAccount(@PathVariable Long id, @Valid @RequestBody AccountUserSearchDTO dto, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return accountService.searchSelfAccounts(id, dto, pageable);
     }
 
 

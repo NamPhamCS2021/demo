@@ -10,7 +10,6 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @Builder
-public class AccountUpdateDTO {
+public class AccountUpdateStatusDTO {
     private AccountStatus status;
-    private BigDecimal accountLimit;
 }

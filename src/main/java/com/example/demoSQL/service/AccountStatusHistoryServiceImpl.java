@@ -1,19 +1,26 @@
 package com.example.demoSQL.service;
 
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.accountstatushistory.AccountStatusHistoryResponseDTO;
+import com.example.demoSQL.dto.accountstatushistory.AccountStatusHistorySearchDTO;
+import com.example.demoSQL.dto.accountstatushistory.AccountStatusHistoryUserSearchDTO;
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.AccountStatusHistory;
+import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AccountStatusHistoryRepository;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.demoSQL.specification.AccountStatusHistorySpecification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -24,50 +31,71 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
     @Autowired
     private AccountRepository accountRepository;
 
-    public AccountStatusHistoryServiceImpl(AccountStatusHistoryRepository accountStatusHistoryRepository) {
-        this.accountStatusHistoryRepository = accountStatusHistoryRepository;
-    }
+
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = "accountStatusHistoryByAccount", key = "#id")
-    public Page<AccountStatusHistoryResponseDTO> findByAccountId(Long id, Pageable pageable){
-        if(!accountRepository.existsById(id)){
-            throw new EntityNotFoundException("Account with id "+id+" not found");
+    public ApiResponse<Object> findByAccountId(Long id, Pageable pageable){
+        try{
+            Optional<Account> accountOptional = accountRepository.findById(id);
+            if(accountOptional.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findByAccountId(id, pageable);
+            return new ApiResponse<>(accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-        Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findByAccountId(id, pageable);
-        return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    @Cacheable(value = "accountStatusHistoryByAccountNumber", key = "#accountNumber")
-    public Page<AccountStatusHistoryResponseDTO> findByAccountNumber(String accountNumber, Pageable pageable){
-        if(!accountRepository.existsByAccountNumber(accountNumber)){
-            throw new EntityNotFoundException("Account with account number "+accountNumber+" not found");
-        }
-        Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findByAccountNumber(accountNumber, pageable);
-        return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
     }
 
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AccountStatusHistoryResponseDTO> findBetweenByAccount(Long id, LocalDateTime start, LocalDateTime end, Pageable pageable){
-        if(!accountRepository.existsById(id)) {
-            throw new EntityNotFoundException("Account with id " + id + " not found");
+    public ApiResponse<Object> findBetweenByAccount(Long id, LocalDateTime start, LocalDateTime end, Pageable pageable){
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findBetweenByAccountId(id, start, end, pageable);
+            return new ApiResponse<>(accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-        Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findBetweenByAccountId(id, start, end, pageable);
-        return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
+
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<AccountStatusHistoryResponseDTO> findBetweenByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end, Pageable pageable){
-        if(!accountRepository.existsByAccountNumber(accountNumber)) {
-            throw new EntityNotFoundException("Account with account number " + accountNumber + " not found");
+    public ApiResponse<Object> search(AccountStatusHistorySearchDTO dto, Pageable pageable) {
+        try{
+            Specification<AccountStatusHistory> spec = AccountStatusHistorySpecification.hasAccount(dto.getAccountId())
+                    .and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()))
+                    .and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()))
+                    .and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
+            return new ApiResponse<>(accountStatusHistoryRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-        Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findBetweenByAccountNumber(accountNumber, start, end, pageable);
-        return accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ApiResponse<Object> selfSearch(Long id, AccountStatusHistoryUserSearchDTO dto, Pageable pageable) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findById(id);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Specification<AccountStatusHistory> spec = AccountStatusHistorySpecification.hasAccount(id)
+                    .and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()))
+                    .and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()))
+                    .and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
+            return new ApiResponse<>(accountStatusHistoryRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
     }
 
     //helper

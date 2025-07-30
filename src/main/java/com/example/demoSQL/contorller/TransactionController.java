@@ -1,83 +1,74 @@
 package com.example.demoSQL.contorller;
 
 
-import com.example.demoSQL.projections.LocationCount;
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
-import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
+import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
+import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
 import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.service.TransactionService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
+
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/transactions")
 @Validated
+@RequiredArgsConstructor
 public class TransactionController {
 
-    @Autowired
-    private TransactionService transactionService;
+    private final TransactionService transactionService;
 
-    public TransactionController(TransactionService transactionService) {
-        this.transactionService = transactionService;
-    }
-
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#transactionCreateDTO.accountId)")
     @PostMapping("/deposit")
-    public ResponseEntity<TransactionResponseDTO> deposit(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
-        TransactionResponseDTO transactionResponseDTO = transactionService.deposit(transactionCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponseDTO);
+    public ResponseEntity<ApiResponse<Object>> deposit(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
+        return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.deposit(transactionCreateDTO));
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#transactionCreateDTO.accountId)")
     @PostMapping("/withdraw")
-    public ResponseEntity<TransactionResponseDTO> withdraw(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
-        TransactionResponseDTO transactionResponseDTO =  transactionService.withdraw(transactionCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponseDTO);
+    public ApiResponse<Object> withdraw(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
+        return transactionService.withdraw(transactionCreateDTO);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#transactionCreateDTO.accountId)")
     @PostMapping("/transfer")
-    public ResponseEntity<TransactionResponseDTO> transfer(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
-        TransactionResponseDTO transactionResponseDTO = transactionService.transfer(transactionCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(transactionResponseDTO);
+    public ApiResponse<Object> transfer(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
+        return transactionService.transfer(transactionCreateDTO);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfTransaction(#id)")
     @GetMapping("/{id}")
-    public ResponseEntity<TransactionResponseDTO> getTransaction(@PathVariable Long id){
-        TransactionResponseDTO transactionResponseDTO = transactionService.getTransaction(id);
-        return ResponseEntity.ok(transactionResponseDTO);
+    public ApiResponse<Object> getTransaction(@PathVariable Long id){
+        return transactionService.getTransaction(id);
     }
 
-    @GetMapping("/account")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountId(@RequestParam Long accountId,
-                                                                             @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByAccountId(accountId, pageable);
-        return ResponseEntity.ok(transactions);
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/searchh")
+    public ApiResponse<Object> searchTransactions( @Valid @RequestBody TransactionSearchDTO dto, @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
+        return transactionService.searchTransactions(dto, pageable);
     }
 
-    @GetMapping("/type/{type}")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByType(@PathVariable TransactionType type,
-                                                                             @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByType(type, pageable);
-        return ResponseEntity.ok(transactions);
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#accountId)")
+    @PutMapping("/account/{accountId}/search")
+    public ApiResponse<Object> selfSearchTransactions(@PathVariable Long accountId, @Valid @RequestBody TransactionUserSearchDTO dto, @PageableDefault(size = 20,sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
+        return transactionService.selfTransactionSearch(accountId,dto,pageable);
     }
 
-    @GetMapping("account/type/{type}")
-    public ResponseEntity<Page<TransactionResponseDTO>> getTransactionsByAccountIdAndType(@RequestParam Long accountId,
-                                                                             @PathVariable TransactionType type,
-                                                                             @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        Page<TransactionResponseDTO> transactions = transactionService.getTransactionsByAccountIdAndType(accountId, type, pageable);
-        return ResponseEntity.ok(transactions);
-    }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("locationcount")
-    public List<LocationCount> countTransactionsByLocation(){
+    public ApiResponse<Object> countTransactionsByLocation(){
         return transactionService.countTransactionsByLocation();
     }
 }

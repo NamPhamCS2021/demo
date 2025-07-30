@@ -1,90 +1,92 @@
 package com.example.demoSQL.contorller;
 
-import com.example.demoSQL.dto.account.AccountCreateDTO;
-import com.example.demoSQL.dto.account.AccountResponseDTO;
-import com.example.demoSQL.dto.account.AccountUpdateDTO;
+import com.example.demoSQL.dto.ApiResponse;
+import com.example.demoSQL.dto.account.*;
 import com.example.demoSQL.enums.AccountStatus;
-import com.example.demoSQL.service.AccountServiceImpl;
+import com.example.demoSQL.service.AccountService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/accounts")
-@Validated
+@RequiredArgsConstructor
 public class AccountController {
 
-    @Autowired
-    private AccountServiceImpl accountServiceImpl;
+    private final AccountService accountService;
 
-    public AccountController(AccountServiceImpl accountServiceImpl){
-        this.accountServiceImpl = accountServiceImpl;
-    }
 
+    @PreAuthorize("@authSecurity.isSelfCustomer(#accountCreateDTO.customerId)")
     @PostMapping
-    public ResponseEntity<AccountResponseDTO> createAccount(@Valid @RequestBody AccountCreateDTO accountCreateDTO){
-        AccountResponseDTO createdDTO = accountServiceImpl.createAccount(accountCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDTO);
+    public ApiResponse<Object> createAccount(@Valid @RequestBody AccountCreateDTO accountCreateDTO){
+        return accountService.createAccount(accountCreateDTO);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     @PutMapping("status/{id}")
-    public ResponseEntity<AccountResponseDTO> updateAccountStatus(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
-        AccountResponseDTO updatedDTO = accountServiceImpl.updateAccountStatus(id, accountUpdateDTO);
-        return ResponseEntity.ok(updatedDTO);
+    public ApiResponse<Object> updateAccountStatus(@PathVariable Long id, @Valid @RequestBody AccountUpdateStatusDTO accountUpdateStatusDTO){
+        return accountService.updateAccountStatus(id, accountUpdateStatusDTO);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
     @PutMapping("accountlimit/{id}")
-    public ResponseEntity<AccountResponseDTO> updateAccountLimit(@PathVariable Long id, @Valid @RequestBody AccountUpdateDTO accountUpdateDTO){
-        AccountResponseDTO updatedDTO = accountServiceImpl.updateAccountLimit(id, accountUpdateDTO);
-        return ResponseEntity.ok(updatedDTO);
+    public ApiResponse<Object> updateAccountLimit(@PathVariable Long id, @Valid @RequestBody AccountUpdateLimitDTO accountUpdateLimitDTO){
+        return accountService.updateAccountLimit(id, accountUpdateLimitDTO);
+
     }
+
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @GetMapping("/{id}")
-    public ResponseEntity<AccountResponseDTO> getAccountById(@PathVariable Long id){
-        AccountResponseDTO accountResponseDTO = accountServiceImpl.getAccountById(id);
-        return ResponseEntity.ok(accountResponseDTO);
+    public ApiResponse<Object> getAccountById(@PathVariable Long id){
+        return accountService.getAccountById(id);
     }
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<Page<AccountResponseDTO>> getAllAccount(
+    public ApiResponse<Object> getAllAccount(
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountServiceImpl.getAllAccounts(pageable);
-        return ResponseEntity.ok(accounts);
+        return accountService.getAllAccounts(pageable);
     }
 
+    @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
+    @GetMapping("customer/{customerId}")
+    public ApiResponse<Object> getAccountsByCustomerId(@PathVariable Long customerId,
+                                                                       @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
+        return accountService.getAccountByCustomerId(customerId, pageable);
+    }
+
+    @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
+    @GetMapping("customer/status/{customerId}")
+    public ApiResponse<Object> getAccountsByCustomerIdAndStatus(@PathVariable Long customerId,@RequestParam AccountStatus status,
+                                                                                @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
+        return accountService.getAccountsByCustomerIdAndStatus(customerId, status, pageable);
+    }
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("status/{status}")
-    public ResponseEntity<Page<AccountResponseDTO>> getAccountsByStatus(
+    public ApiResponse<Object> getAccountsByStatus(
             @PathVariable AccountStatus status,
             @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountServiceImpl.getAccountsByStatus(status, pageable);
-        return ResponseEntity.ok(accounts);
+        return accountService.getAccountsByStatus(status, pageable);
     }
 
-    @GetMapping("customer")
-    public ResponseEntity<Page<AccountResponseDTO>> getAccountsByCustomer(
-            @RequestParam Long customerId,
-            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountServiceImpl.getAccountsByCustomer(customerId, pageable);
-        return ResponseEntity.ok(accounts);
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PostMapping("/search")
+    public ApiResponse<Object> searchAccounts(@Valid @RequestBody AccountSearchDTO accountSearchDTO, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
+        return accountService.searchAccounts(accountSearchDTO, pageable);
     }
-    @GetMapping("account-number/{accountNumber}")
-    public ResponseEntity<AccountResponseDTO> getAccountByAccountNumber(
-            @PathVariable String accountNumber) {
-        AccountResponseDTO account = accountServiceImpl.getAccountByAccountNumber(accountNumber);
-        return ResponseEntity.ok(account);
+
+    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
+    @PostMapping("/search/{id}")
+    public ApiResponse<Object> searchSelfAccount(@PathVariable Long id, @Valid @RequestBody AccountUserSearchDTO dto, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return accountService.searchSelfAccounts(id, dto, pageable);
     }
-    @GetMapping("customer/status/{status}")
-    public ResponseEntity<Page<AccountResponseDTO>> getAccountsByCustomerAndStatus(
-            @RequestParam Long customerId,
-            @PathVariable AccountStatus status,
-            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        Page<AccountResponseDTO> accounts = accountServiceImpl.getAccountsByCustomerAndStatus(customerId, status, pageable);
-        return ResponseEntity.ok(accounts);
-    }
+
+
 
 }

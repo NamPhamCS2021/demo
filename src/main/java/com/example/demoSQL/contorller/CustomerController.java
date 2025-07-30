@@ -1,56 +1,62 @@
 package com.example.demoSQL.contorller;
 
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
-import com.example.demoSQL.dto.customer.CustomerResponseDTO;
-import com.example.demoSQL.dto.customer.CustomerSummaryDTO;
+import com.example.demoSQL.dto.customer.CustomerSearchDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
+import com.example.demoSQL.enums.CustomerType;
+import com.example.demoSQL.enums.ReturnMessage;
+import com.example.demoSQL.service.CustomerService;
 import com.example.demoSQL.service.CustomerServiceImpl;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/customers")
-@Validated
+@RequiredArgsConstructor
 public class CustomerController {
 
-    @Autowired
-    private CustomerServiceImpl customerServiceImpl;
+    private final CustomerService customerService;
 
-    public CustomerController(CustomerServiceImpl customerServiceImpl) {
-        this.customerServiceImpl = customerServiceImpl;
-    }
 
     @PostMapping
-    public ResponseEntity<CustomerResponseDTO> createCustomer(@Valid @RequestBody CustomerCreateDTO customerCreateDTO){
-        CustomerResponseDTO createdDTO = customerServiceImpl.createCustomer(customerCreateDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDTO);
+    public ApiResponse<Object> createCustomer(@Valid @RequestBody CustomerCreateDTO customerCreateDTO){
+        return customerService.createCustomer(customerCreateDTO);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/{id}")
-    public ResponseEntity<CustomerResponseDTO> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerUpdateDTO customerUpdateDTO){
-            CustomerResponseDTO updatedCustomer = customerServiceImpl.updateCustomer(id,customerUpdateDTO);
-            return ResponseEntity.ok(updatedCustomer);
+    public ApiResponse<Object> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerUpdateDTO customerUpdateDTO){
+        return customerService.updateCustomer(id,customerUpdateDTO);
     }
-
+    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
-    public ResponseEntity<CustomerResponseDTO> getCustomerById(@PathVariable Long id){
-        CustomerResponseDTO customerResponseDTO = customerServiceImpl.getCustomerById(id);
-        return ResponseEntity.ok(customerResponseDTO);
+    public ApiResponse<Object> getCustomerById(@PathVariable Long id){
+        return customerService.getCustomerById(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
-    public ResponseEntity<Page<CustomerSummaryDTO>> getAllCustomer
+    public ApiResponse<Object> getAllCustomer
             (@PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        Page<CustomerSummaryDTO> customerPage = customerServiceImpl.getAll(pageable);
-        return ResponseEntity.ok(customerPage);
+        return customerService.getAll(pageable);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @SecurityRequirement(name = "Beare Authentication")
+    @PostMapping("/search")
+    public ApiResponse<Object> searchCustomers(@Valid @RequestBody CustomerSearchDTO customerSearchDTO, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
+        return customerService.searchCustomers(customerSearchDTO, pageable);
     }
 }

@@ -1,8 +1,10 @@
 package com.example.demoSQL.dto.customer;
 
 
+import com.example.demoSQL.enums.CustomerType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
@@ -23,4 +25,7 @@ public class CustomerCreateDTO {
 
     @NotBlank(message = "phone number is required")
     private String phoneNumber;
+
+    @NotNull(message = "Customer type is required")
+    private CustomerType type;
 }

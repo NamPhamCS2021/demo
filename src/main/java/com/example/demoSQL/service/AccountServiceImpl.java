@@ -13,8 +13,8 @@ import com.example.demoSQL.repository.AccountStatusHistoryRepository;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.specification.AccountSpecification;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -28,17 +28,18 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 @Transactional
 public class AccountServiceImpl implements AccountService {
 
-    @Autowired
-    private AccountRepository accountRepository;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private AccountStatusHistoryRepository accountStatusHistoryRepository;
+
+    private final CustomerRepository customerRepository;
+
+
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository;
 
 
 
@@ -101,7 +102,7 @@ public class AccountServiceImpl implements AccountService {
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
             Account existingAccount = optionalAccount.get();
-            if (accountUpdate.getAccountLimit() != null && accountUpdate.getAccountLimit() != existingAccount.getAccountLimit()) {
+            if (accountUpdate.getAccountLimit() != null && !accountUpdate.getAccountLimit().equals(existingAccount.getAccountLimit())) {
                 existingAccount.setAccountLimit(accountUpdate.getAccountLimit());
             }
             accountRepository.save(existingAccount);
@@ -142,7 +143,6 @@ public class AccountServiceImpl implements AccountService {
             if(optionalCustomer.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-            Customer customer = optionalCustomer.get();
             Page<Account> accountPage = accountRepository.findByCustomerId(id, pageable);
             return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
@@ -158,7 +158,6 @@ public class AccountServiceImpl implements AccountService {
             if(optionalCustomer.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-            Customer customer = optionalCustomer.get();
             Page<Account> accountPage = accountRepository.findByCustomerIdAndStatus(id, status, pageable);
             return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {

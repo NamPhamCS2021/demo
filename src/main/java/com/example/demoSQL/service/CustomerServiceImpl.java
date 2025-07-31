@@ -3,7 +3,7 @@ package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.*;
-import com.example.demoSQL.entity.Account;
+
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.enums.ReturnMessage;
@@ -12,7 +12,7 @@ import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.specification.CustomerSpecification;
-import jakarta.persistence.EntityNotFoundException;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -62,7 +62,6 @@ public class CustomerServiceImpl implements CustomerService {
             userRepository.save(user);
             customerRepository.save(customer);
 
-//        gotta do this later
             return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -142,8 +141,9 @@ public class CustomerServiceImpl implements CustomerService {
             spec = spec.and(CustomerSpecification.hasType(dto.getType()));
             spec = spec.and(CustomerSpecification.createdBefore(dto.getTo()));
             spec = spec.and(CustomerSpecification.createdAfter(dto.getFrom()));
-
-            return new ApiResponse<>(customerRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            Page<Customer> customerPage = customerRepository.findAll(spec, pageable);
+            Page<CustomerResponseDTO> customerResponseDTOPage = customerPage.map(this::toCustomerResponse);
+            return new ApiResponse<>(customerResponseDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -156,9 +156,9 @@ public class CustomerServiceImpl implements CustomerService {
                 .lastName(customer.getLastName())
                 .email(customer.getEmail()).phoneNumber(customer.getPhoneNumber()).build();
     }
-    private CustomerSummaryDTO toCustomerSummaryDTO(Customer customer){
-        return CustomerSummaryDTO.builder().firstName(customer.getFirstName())
-                .lastName(customer.getLastName())
-                .email(customer.getEmail()).phoneNumber(customer.getPhoneNumber()).build();
-    }
+//    private CustomerSummaryDTO toCustomerSummaryDTO(Customer customer){
+//        return CustomerSummaryDTO.builder().firstName(customer.getFirstName())
+//                .lastName(customer.getLastName())
+//                .email(customer.getEmail()).phoneNumber(customer.getPhoneNumber()).build();
+//    }
 }

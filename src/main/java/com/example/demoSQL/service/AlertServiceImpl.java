@@ -6,7 +6,6 @@ import com.example.demoSQL.dto.alert.AlertDTO;
 import com.example.demoSQL.dto.alert.AlertSearchDTO;
 import com.example.demoSQL.dto.alert.AlertUserSearchDTO;
 import com.example.demoSQL.entity.Account;
-import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.entity.Alert;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.AlertStatus;
@@ -16,7 +15,7 @@ import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AlertRepository;
 import com.example.demoSQL.repository.TransactionRepository;
 import com.example.demoSQL.specification.AlertSpecification;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,29 +24,24 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class AlertServiceImpl implements AlertService {
 
-    @Autowired
-    private AlertRepository alertRepository;
+    private final AlertRepository alertRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
 
-    @Autowired
-    private Executor virtualExecutor;
+    private final Executor virtualExecutor;
 
 
 
@@ -85,7 +79,6 @@ public class AlertServiceImpl implements AlertService {
             notNormal = true;
         }
 
-        LocalDateTime transactionTime = transaction.getTimestamp();
 
         LocalDateTime startTime = transaction.getTimestamp().minusSeconds(30);
 
@@ -261,7 +254,9 @@ public class AlertServiceImpl implements AlertService {
             spec = spec.and(AlertSpecification.hasType(alertSearchDTO.getType()));
             spec = spec.and(AlertSpecification.createdAfter(alertSearchDTO.getStart()));
             spec = spec.and(AlertSpecification.createdBefore(alertSearchDTO.getEnd()));
-            return new ApiResponse<>(alertRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            Page<Alert> alertPage = alertRepository.findAll(spec, pageable);
+            Page<AlertDTO> alertDTOPage = alertPage.map(this::toAlertDTO);
+            return new ApiResponse<>(alertDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -282,7 +277,9 @@ public class AlertServiceImpl implements AlertService {
             spec = spec.and(AlertSpecification.hasType(alertUserSearchDTO.getType()));
             spec = spec.and(AlertSpecification.createdAfter(alertUserSearchDTO.getStart()));
             spec = spec.and(AlertSpecification.createdBefore(alertUserSearchDTO.getEnd()));
-            return new ApiResponse<>(alertRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            Page<Alert> alertPage = alertRepository.findAll(spec, pageable);
+            Page<AlertDTO> alertDTOPage = alertPage.map(this::toAlertDTO);
+            return new ApiResponse<>(alertDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }

@@ -5,7 +5,6 @@ import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
 import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
 import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
-import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.service.TransactionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;

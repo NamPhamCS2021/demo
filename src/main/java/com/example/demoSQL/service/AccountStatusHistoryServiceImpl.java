@@ -11,8 +11,7 @@ import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.AccountStatusHistoryRepository;
 import com.example.demoSQL.specification.AccountStatusHistorySpecification;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,13 +22,14 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 @Transactional
 public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryService {
 
-    @Autowired
-    private AccountStatusHistoryRepository accountStatusHistoryRepository;
-    @Autowired
-    private AccountRepository accountRepository;
+
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository;
+
+    private final AccountRepository accountRepository;
 
 
 
@@ -76,7 +76,9 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
             spec = spec.and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()));
             spec = spec.and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()));
             spec = spec.and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
-            return new ApiResponse<>(accountStatusHistoryRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findAll(spec, pageable);
+            Page<AccountStatusHistoryResponseDTO> accountStatusHistoryResponseDTOPage = accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
+            return new ApiResponse<>(accountStatusHistoryResponseDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -97,7 +99,9 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
             spec = spec.and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()));
             spec = spec.and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()));
             spec = spec.and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
-            return new ApiResponse<>(accountStatusHistoryRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            Page<AccountStatusHistory> accountStatusHistoryPage = accountStatusHistoryRepository.findAll(spec, pageable);
+            Page<AccountStatusHistoryResponseDTO> accountStatusHistoryResponseDTOPage = accountStatusHistoryPage.map(this::toAccountStatusHistoryDTO);
+            return new ApiResponse<>(accountStatusHistoryResponseDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }

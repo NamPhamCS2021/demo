@@ -5,6 +5,7 @@ import com.example.demoSQL.enums.AccountStatus;
 import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.repository.*;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,27 +16,22 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class ReportServiceImpl implements ReportService{
 
-    @Autowired
-    private AccountStatusHistoryRepository accountStatusHistoryRepository;
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
-    @Autowired
-    private CustomerRepository customerRepository;
+    private final CustomerRepository customerRepository;
 
-    @Autowired
-    private TransactionRepository transactionRepository;
+    private final TransactionRepository transactionRepository;
 
-    @Autowired
-    AccountStatusHistoryRepository accountStatusHistoryRepository1;
+    private final AccountStatusHistoryRepository accountStatusHistoryRepository1;
 
-    @Autowired
-    private AlertRepository alertRepository;
+    private final AlertRepository alertRepository;
 
 
 
@@ -79,6 +75,9 @@ public class ReportServiceImpl implements ReportService{
         report.put("account limit", accountLimit);
         report.put("biggest transaction amount", biggestAmount);
         report.put("smallest trasnaction amount", smallestAmount);
+        report.put("average transaction amount", averageTransactionAmount);
+        report.put("total transaction amount", totalAmount);
+        report.put("total alerts", totalAlert);
         report.put("total transactions made", totalTransaction);
 
         return report;

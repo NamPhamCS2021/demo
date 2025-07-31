@@ -3,8 +3,6 @@ package com.example.demoSQL.service;
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
 import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
-import com.example.demoSQL.entity.Customer;
-import com.example.demoSQL.entity.PeriodicalPayment;
 import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
@@ -16,9 +14,7 @@ import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.repository.TransactionRepository;
-import com.example.demoSQL.specification.PeriodicalPaymentSpecification;
 import com.example.demoSQL.specification.TransactionSpecification;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -192,14 +188,16 @@ public class TransactionServiceImpl implements TransactionService {
 
             spec = spec.and(TransactionSpecification.hasAccountId(dto.getAccountId()));
             spec = spec.and(TransactionSpecification.hasReceiverId(dto.getReceiverId()));
-            spec = TransactionSpecification.hasType(dto.getType());
+            spec = spec.and(TransactionSpecification.hasType(dto.getType()));
             spec = spec.and(TransactionSpecification.hasMinAmount(dto.getMinAmount()));
             spec = spec.and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()));
             spec = spec.and(TransactionSpecification.occurredBefore(dto.getFrom()));
             spec = spec.and(TransactionSpecification.occurredAfter(dto.getTo()));
             spec = spec.and(TransactionSpecification.hasChecked(dto.getChecked()));
             spec = spec.and(TransactionSpecification.hasLocation(dto.getLocation()));
-                return new ApiResponse<>(transactionRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            Page<Transaction> transactionPage = transactionRepository.findAll(spec, pageable);
+            Page<TransactionResponseDTO> transactionResponseDTOPage = transactionPage.map(this::toTransactionResponseDTO);
+                return new ApiResponse<>(transactionResponseDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -225,8 +223,10 @@ public class TransactionServiceImpl implements TransactionService {
             spec = spec.and(TransactionSpecification.occurredAfter(dto.getFrom()));
             spec = spec.and(TransactionSpecification.hasChecked(dto.getChecked()));
 
+            Page<Transaction> transactionPage = transactionRepository.findAll(spec, pageable);
+            Page<TransactionResponseDTO> transactionResponseDTOPage = transactionPage.map(this::toTransactionResponseDTO);
 
-            return new ApiResponse<>(transactionRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+            return new ApiResponse<>(transactionResponseDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }

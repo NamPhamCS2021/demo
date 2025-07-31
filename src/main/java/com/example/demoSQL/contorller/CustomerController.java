@@ -5,10 +5,7 @@ import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
 import com.example.demoSQL.dto.customer.CustomerSearchDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
-import com.example.demoSQL.enums.CustomerType;
-import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.service.CustomerService;
-import com.example.demoSQL.service.CustomerServiceImpl;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

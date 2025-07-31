@@ -12,8 +12,7 @@ import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.PeriodicalPaymentRepository;
 import com.example.demoSQL.specification.PeriodicalPaymentSpecification;
-import org.hibernate.annotations.Cache;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -27,15 +26,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
-    @Autowired
-    private PeriodicalPaymentRepository periodicalPaymentRepository;
+    private final PeriodicalPaymentRepository periodicalPaymentRepository;
 
-    @Autowired
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
 
 
@@ -175,7 +173,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 0 * * *") //everyday at midnight
+    @Scheduled(cron = "0 0 0 * * *") //every day at midnight
     public void processingPayment() {
         List<PeriodicalPayment> payments = periodicalPaymentRepository.findAll();
 

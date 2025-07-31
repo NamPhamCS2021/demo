@@ -32,9 +32,10 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
     private AccountRepository accountRepository;
 
 
+
+
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "accountStatusHistoryByAccount", key = "#id")
     public ApiResponse<Object> findByAccountId(Long id, Pageable pageable){
         try{
             Optional<Account> accountOptional = accountRepository.findById(id);
@@ -69,10 +70,12 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
     @Transactional(readOnly = true)
     public ApiResponse<Object> search(AccountStatusHistorySearchDTO dto, Pageable pageable) {
         try{
-            Specification<AccountStatusHistory> spec = AccountStatusHistorySpecification.hasAccount(dto.getAccountId())
-                    .and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()))
-                    .and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()))
-                    .and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
+            Specification<AccountStatusHistory> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(AccountStatusHistorySpecification.hasAccount(dto.getAccountId()));
+            spec = spec.and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()));
+            spec = spec.and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()));
+            spec = spec.and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
             return new ApiResponse<>(accountStatusHistoryRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -88,10 +91,12 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
 
-            Specification<AccountStatusHistory> spec = AccountStatusHistorySpecification.hasAccount(id)
-                    .and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()))
-                    .and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()))
-                    .and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
+            Specification<AccountStatusHistory> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(AccountStatusHistorySpecification.hasAccount(id));
+            spec = spec.and(AccountStatusHistorySpecification.hasStatus(dto.getStatus()));
+            spec = spec.and(AccountStatusHistorySpecification.createdBefore(dto.getEnd()));
+            spec = spec.and(AccountStatusHistorySpecification.createdAfter(dto.getStart()));
             return new ApiResponse<>(accountStatusHistoryRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());

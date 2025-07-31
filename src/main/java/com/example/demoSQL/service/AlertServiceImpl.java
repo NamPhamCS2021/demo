@@ -6,6 +6,7 @@ import com.example.demoSQL.dto.alert.AlertDTO;
 import com.example.demoSQL.dto.alert.AlertSearchDTO;
 import com.example.demoSQL.dto.alert.AlertUserSearchDTO;
 import com.example.demoSQL.entity.Account;
+import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.entity.Alert;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.AlertStatus;
@@ -16,6 +17,7 @@ import com.example.demoSQL.repository.AlertRepository;
 import com.example.demoSQL.repository.TransactionRepository;
 import com.example.demoSQL.specification.AlertSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -102,6 +104,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "Alert")
     public ApiResponse<Object> getAll(Pageable pageable) {
         try{
             Page<Alert> alerts = alertRepository.findAll(pageable);
@@ -112,13 +115,12 @@ public class AlertServiceImpl implements AlertService {
 
     }
 
-    private Alert createAlert(Transaction transaction, String description, AlertType type) {
+    private void createAlert(Transaction transaction, String description, AlertType type) {
         Alert alert = new Alert();
         alert.setTransaction(transaction);
         alert.setDescription(description);
         alert.setType(type);
         alertRepository.save(alert);
-        return alert;
     }
     @Override
     @Transactional(readOnly = true)
@@ -252,11 +254,13 @@ public class AlertServiceImpl implements AlertService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> search(AlertSearchDTO alertSearchDTO, Pageable pageable) {
         try{
-            Specification<Alert> spec = AlertSpecification.hasTransaction(alertSearchDTO.getTransactionId())
-                    .and(AlertSpecification.hasStatus(alertSearchDTO.getStatus()))
-                    .and(AlertSpecification.hasType(alertSearchDTO.getType()))
-                    .and(AlertSpecification.createdAfter(alertSearchDTO.getStart()))
-                    .and(AlertSpecification.createdBefore(alertSearchDTO.getEnd()));
+            Specification<Alert> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(AlertSpecification.hasTransaction(alertSearchDTO.getTransactionId()));
+            spec = spec.and(AlertSpecification.hasStatus(alertSearchDTO.getStatus()));
+            spec = spec.and(AlertSpecification.hasType(alertSearchDTO.getType()));
+            spec = spec.and(AlertSpecification.createdAfter(alertSearchDTO.getStart()));
+            spec = spec.and(AlertSpecification.createdBefore(alertSearchDTO.getEnd()));
             return new ApiResponse<>(alertRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -271,11 +275,13 @@ public class AlertServiceImpl implements AlertService {
             if(optionalTransaction.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-            Specification<Alert> spec = AlertSpecification.hasTransaction(id)
-                    .and(AlertSpecification.hasStatus(alertUserSearchDTO.getStatus()))
-                    .and(AlertSpecification.hasType(alertUserSearchDTO.getType()))
-                    .and(AlertSpecification.createdAfter(alertUserSearchDTO.getStart()))
-                    .and(AlertSpecification.createdBefore(alertUserSearchDTO.getEnd()));
+            Specification<Alert> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(AlertSpecification.hasTransaction(id));
+            spec = spec.and(AlertSpecification.hasStatus(alertUserSearchDTO.getStatus()));
+            spec = spec.and(AlertSpecification.hasType(alertUserSearchDTO.getType()));
+            spec = spec.and(AlertSpecification.createdAfter(alertUserSearchDTO.getStart()));
+            spec = spec.and(AlertSpecification.createdBefore(alertUserSearchDTO.getEnd()));
             return new ApiResponse<>(alertRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());

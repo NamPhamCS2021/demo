@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/accountstatushistory")
 @Validated
@@ -29,7 +28,6 @@ public class AccountStatusHistoryController {
 
 
 
-    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
     @GetMapping("/account/{id}")
     public ApiResponse<Object> getAccountStatusHistoryById(@PathVariable Long id,
                                                    @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
@@ -37,7 +35,6 @@ public class AccountStatusHistoryController {
     }
 
 
-    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
     @GetMapping("account/between")
     public ApiResponse<Object> getAccountStatusHistoryByIdAndStatus(@RequestParam Long id,
                                                                     @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
@@ -46,14 +43,12 @@ public class AccountStatusHistoryController {
         return accountStatusHistoryService.findBetweenByAccount(id, start, end, pageable);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/search")
     public ApiResponse<Object> searchAccountStatusHistory(@Valid @RequestBody AccountStatusHistorySearchDTO dto,
                                                           @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return accountStatusHistoryService.search(dto, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @PostMapping("/search/{id}")
     public ApiResponse<Object> selfSearch(@PathVariable Long id, @Valid @RequestBody AccountStatusHistoryUserSearchDTO dto,
                                           @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-@SecurityRequirement(name = "Bearer Authenthication")
 @RestController("/api/report")
 @RequiredArgsConstructor
 public class ReportController {
@@ -20,28 +19,24 @@ public class ReportController {
     private final ReportService reportService;
 
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/transaction-report")
     public Map<String, Object> getTransactionReport(@RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                                     @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end){
         return reportService.generateReport(start, end);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/report-for-account/{id}")
     public Map<String, Object> generateReportByAccount(@PathVariable Long id, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                                        @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end) {
         return reportService.generateReportByAccount(id, start, end);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/account-report")
     public Map<String, Object> generateAccountReport(@RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                                      @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end) {
         return reportService.generateAccountReport(start, end);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/transaction-report-pdf")
     public void exportTransactionReportToPdf(HttpServletResponse response, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                              @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end) {
@@ -56,7 +51,6 @@ public class ReportController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/transaction-report-by-accoount-pdf")
     public void exportTransactionReportByAccountToPdf(HttpServletResponse response, @RequestParam Long id, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                              @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end) {
@@ -71,7 +65,6 @@ public class ReportController {
         }
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("/account-report-pdf")
     public void exportAccountReportToPdf(HttpServletResponse response, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                              @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end) {

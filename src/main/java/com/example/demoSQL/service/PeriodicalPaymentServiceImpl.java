@@ -12,7 +12,10 @@ import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.PeriodicalPaymentRepository;
 import com.example.demoSQL.specification.PeriodicalPaymentSpecification;
+import org.hibernate.annotations.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -37,6 +40,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
 
     @Override
+    @CachePut(value = "payment", key = "periodicallyPaymentDTO.accountId")
     public ApiResponse<Object> createPeriodicalPayment(PeriodicallyPaymentDTO periodicallyPaymentDTO) {
         try{
             Optional<Account> optionalAccount = accountRepository.findById(periodicallyPaymentDTO.getAccountId());
@@ -59,6 +63,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
     }
 
     @Override
+    @CachePut(value = "payment", key = "#id")
     public ApiResponse<Object> updatePeriodicalPayment(Long id, PeriodicallyPaymentUpdateDTO periodicallyPaymentUpdateDTO){
         try{
             Optional<PeriodicalPayment> optionalPeriodicallyPayment = periodicalPaymentRepository.findById(id);
@@ -81,6 +86,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "payment", key = "#id")
     public ApiResponse<Object> getPeriodicalPaymentById(Long id) {
         try {
             Optional<PeriodicalPayment> optionalPeriodicallyPayment = periodicalPaymentRepository.findById(id);
@@ -125,15 +131,17 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> searchPeriodicalPayment(PeriodicalPaymentSearchDTO dto, Pageable pageable) {
         try{
-            Specification<PeriodicalPayment> spec = PeriodicalPaymentSpecification.hasAccount(dto.getAccountId())
-                    .and(PeriodicalPaymentSpecification.hasPeriod(dto.getPeriod()))
-                    .and(PeriodicalPaymentSpecification.hasStatus(dto.getStatus()))
-                    .and(PeriodicalPaymentSpecification.hasMinAmount(dto.getMinAmount()))
-                    .and(PeriodicalPaymentSpecification.hasMaxAmount(dto.getMaxAmount()))
-                    .and(PeriodicalPaymentSpecification.startBefore(dto.getStartedBefore()))
-                    .and(PeriodicalPaymentSpecification.startAfter(dto.getStartedAfter()))
-                    .and(PeriodicalPaymentSpecification.endBefore(dto.getEndedBefore()))
-                    .and(PeriodicalPaymentSpecification.endAfter(dto.getEndedAfter()));
+            Specification<PeriodicalPayment> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(PeriodicalPaymentSpecification.hasAccount(dto.getAccountId()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasPeriod(dto.getPeriod()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasStatus(dto.getStatus()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasMinAmount(dto.getMinAmount()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasMaxAmount(dto.getMaxAmount()));
+            spec = spec.and(PeriodicalPaymentSpecification.startBefore(dto.getStartedBefore()));
+            spec = spec.and(PeriodicalPaymentSpecification.startAfter(dto.getStartedAfter()));
+            spec = spec.and(PeriodicalPaymentSpecification.endBefore(dto.getEndedBefore()));
+            spec = spec.and(PeriodicalPaymentSpecification.endAfter(dto.getEndedAfter()));
             return new ApiResponse<>(periodicalPaymentRepository.findAll(spec, pageable).map(this::toPeriodicallyPaymentDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -149,15 +157,17 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
 
-            Specification<PeriodicalPayment> spec = PeriodicalPaymentSpecification.hasAccount(id)
-                    .and(PeriodicalPaymentSpecification.hasPeriod(dto.getPeriod()))
-                    .and(PeriodicalPaymentSpecification.hasStatus(dto.getStatus()))
-                    .and(PeriodicalPaymentSpecification.hasMinAmount(dto.getMinAmount()))
-                    .and(PeriodicalPaymentSpecification.hasMaxAmount(dto.getMaxAmount()))
-                    .and(PeriodicalPaymentSpecification.startBefore(dto.getStartedBefore()))
-                    .and(PeriodicalPaymentSpecification.startAfter(dto.getStartedAfter()))
-                    .and(PeriodicalPaymentSpecification.endBefore(dto.getEndedBefore()))
-                    .and(PeriodicalPaymentSpecification.endAfter(dto.getEndedAfter()));
+            Specification<PeriodicalPayment> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(PeriodicalPaymentSpecification.hasAccount(id));
+            spec = spec.and(PeriodicalPaymentSpecification.hasPeriod(dto.getPeriod()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasStatus(dto.getStatus()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasMinAmount(dto.getMinAmount()));
+            spec = spec.and(PeriodicalPaymentSpecification.hasMaxAmount(dto.getMaxAmount()));
+            spec = spec.and(PeriodicalPaymentSpecification.startBefore(dto.getStartedBefore()));
+            spec = spec.and(PeriodicalPaymentSpecification.startAfter(dto.getStartedAfter()));
+            spec = spec.and(PeriodicalPaymentSpecification.endBefore(dto.getEndedBefore()));
+            spec = spec.and(PeriodicalPaymentSpecification.endAfter(dto.getEndedAfter()));
             return new ApiResponse<>(periodicalPaymentRepository.findAll(spec, pageable).map(this::toPeriodicallyPaymentDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());

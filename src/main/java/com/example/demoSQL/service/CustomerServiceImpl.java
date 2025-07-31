@@ -3,6 +3,7 @@ package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.*;
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.enums.ReturnMessage;
@@ -39,7 +40,7 @@ public class CustomerServiceImpl implements CustomerService {
 
 
     @Override
-    @CachePut(value = "customers", key = "#customerCreateDTO.email")
+    @CachePut(value = "customers")
     public ApiResponse<Object> createCustomer(CustomerCreateDTO customerCreateDTO){
         try{
             if(customerRepository.existsByPhoneNumberOrEmail(customerCreateDTO.getPhoneNumber(), customerCreateDTO.getEmail())){
@@ -71,7 +72,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    @CachePut(value = "customers", key = "#customerUpdateDTO.email")
+    @CachePut(value = "customers")
     public ApiResponse<Object> updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
         try{
             Optional<Customer> optionalCustomer = customerRepository.findById(id);
@@ -130,17 +131,17 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    @Cacheable(value = "customers", key = "#dto.toString() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort")
     public ApiResponse<Object> searchCustomers(CustomerSearchDTO dto, Pageable pageable) {
         try{
-            Specification<Customer> spec =
-                    CustomerSpecification.hasFirstName(dto.getFirstName())
-                            .and(CustomerSpecification.hasLastName(dto.getLastName()))
-                            .and(CustomerSpecification.hasEmail(dto.getEmail()))
-                            .and(CustomerSpecification.hasPhoneNumber(dto.getPhone()))
-                            .and(CustomerSpecification.hasType(dto.getType()))
-                            .and(CustomerSpecification.createdBefore(dto.getTo()))
-                            .and(CustomerSpecification.createdAfter(dto.getFrom()));
+            Specification<Customer> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(CustomerSpecification.hasFirstName(dto.getFirstName()));
+            spec = spec.and(CustomerSpecification.hasLastName(dto.getLastName()));
+            spec = spec.and(CustomerSpecification.hasEmail(dto.getEmail()));
+            spec = spec.and(CustomerSpecification.hasPhoneNumber(dto.getPhone()));
+            spec = spec.and(CustomerSpecification.hasType(dto.getType()));
+            spec = spec.and(CustomerSpecification.createdBefore(dto.getTo()));
+            spec = spec.and(CustomerSpecification.createdAfter(dto.getFrom()));
 
             return new ApiResponse<>(customerRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){

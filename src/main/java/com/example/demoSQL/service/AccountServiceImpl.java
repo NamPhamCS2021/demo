@@ -135,7 +135,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "accountsByCustomer", key = "#id")
     public ApiResponse<Object> getAccountByCustomerId(Long id, Pageable pageable) {
         try{
             Optional<Customer> optionalCustomer = customerRepository.findById(id);
@@ -153,7 +152,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    @Cacheable(value = "accountsByCustomer", key = "#id")
     public ApiResponse<Object> getAccountsByCustomerIdAndStatus(Long id, AccountStatus status, Pageable pageable) {
         try{
             Optional<Customer> optionalCustomer = customerRepository.findById(id);
@@ -170,7 +168,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "accounts")
     public ApiResponse<Object> getAllAccounts(Pageable pageable) {
         try{
             Page<Account> accountPage = accountRepository.findAll(pageable);
@@ -184,7 +181,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "accountsbyStatus", key = "#status")
     public ApiResponse<Object> getAccountsByStatus(AccountStatus status, Pageable pageable) {
         try{
             Page<Account> accountPage = accountRepository.findByStatus(status, pageable);
@@ -196,18 +192,22 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "accounts")
     public ApiResponse<Object> searchAccounts(AccountSearchDTO dto, Pageable pageable) {
         try{
-            Specification<Account> spec = AccountSpecification.hasCustomer(dto.getCustomerId())
-                    .and(AccountSpecification.hasStatus(dto.getStatus()))
-                    .and(AccountSpecification.hasMaxLimit(dto.getMaxLimit()))
-                    .and(AccountSpecification.hasMinLimit(dto.getMinLimit()))
-                    .and(AccountSpecification.hasMaxBalance(dto.getMaxBalance()))
-                    .and(AccountSpecification.hasMinBalance(dto.getMinBalance()))
-                    .and(AccountSpecification.createdBefore(dto.getFrom()))
-                    .and(AccountSpecification.createdAfter(dto.getTo()));
-            return new ApiResponse<>(accountRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+
+            Specification<Account> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(AccountSpecification.hasCustomer(dto.getCustomerId()));
+            spec = spec.and(AccountSpecification.hasStatus(dto.getStatus()));
+            spec = spec.and(AccountSpecification.hasMaxLimit(dto.getMaxLimit()));
+            spec = spec.and(AccountSpecification.hasMinLimit(dto.getMinLimit()));
+            spec = spec.and(AccountSpecification.hasMaxBalance(dto.getMaxBalance()));
+            spec = spec.and(AccountSpecification.hasMinBalance(dto.getMinBalance()));
+            spec = spec.and(AccountSpecification.createdBefore(dto.getFrom()));
+            spec = spec.and(AccountSpecification.createdAfter(dto.getTo()));
+            Page<Account> result = accountRepository.findAll(spec, pageable);
+            Page<AccountResponseDTO> dtoRes = result.map(this::toAccountResponseDTO);
+            return new ApiResponse<>(dtoRes, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
@@ -215,7 +215,6 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "accounts")
     public ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO dto, Pageable pageable) {
         try {
             log.info("Search DTO - status: {}, minBalance: {}, maxBalance: {}, minLimit: {}, maxLimit: {}, from: {}, to: {}",
@@ -233,10 +232,13 @@ public class AccountServiceImpl implements AccountService {
             spec = spec.and(AccountSpecification.createdBefore(dto.getTo()));
             spec = spec.and(AccountSpecification.createdAfter(dto.getFrom()));
 
+            Page<Account> result = accountRepository.findAll(spec, pageable);
+            Page<AccountResponseDTO> dtoRes = result.map(this::toAccountResponseDTO);
+
             log.debug("Searching with spec: {}", spec);  // safe logging
 
             return new ApiResponse<>(
-                    accountRepository.findAll(spec, pageable),
+                    dtoRes,
                     ReturnMessage.SUCCESS.getCode(),
                     ReturnMessage.SUCCESS.getMessage()
             );

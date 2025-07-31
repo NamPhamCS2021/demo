@@ -19,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
-@SecurityRequirement(name = "Bearer Authentication")
 @Repository
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
@@ -27,20 +26,17 @@ public class PeriodicalPaymentController {
 
     private final PeriodicalPaymentService periodicalPaymentService;
 
-    @PreAuthorize("@authSecurity.isOwnerOfPayment(#id)")
     @GetMapping("/{id}")
     public ApiResponse<Object> findById(@PathVariable Long id){
         return periodicalPaymentService.getPeriodicalPaymentById(id);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @GetMapping("/account/{id}")
     public ApiResponse<Object> findByAccountId(@PathVariable Long id,
                                                @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
         return periodicalPaymentService.getPeriodicalPaymentByAccountId(id, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @GetMapping("/account/status")
     public ApiResponse<Object> findByAccountIdAndStatus(@RequestParam Long id,
                                                         @RequestParam SubscriptionStatus status,
@@ -49,21 +45,18 @@ public class PeriodicalPaymentController {
 
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/search")
     public ApiResponse<Object> search(@Valid @RequestBody PeriodicalPaymentSearchDTO periodicalPaymentSearchDTO,
                                       @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
         return periodicalPaymentService.searchPeriodicalPayment(periodicalPaymentSearchDTO, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
     @PostMapping("/search/{id}")
     public ApiResponse<Object> searchSelfPeriodicalPayment(@PathVariable Long id, @Valid @RequestBody PeriodicalPaymentUserSearchDTO dto,
                                                            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
         return periodicalPaymentService.selfSearchPeriodicalPayment(id, dto, pageable);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/{id}")
     public ApiResponse<Object> update(@PathVariable Long id, @Valid @RequestBody PeriodicallyPaymentUpdateDTO payment){
         return periodicalPaymentService.updatePeriodicalPayment(id, payment);

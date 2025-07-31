@@ -4,6 +4,7 @@ import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
 import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
 import com.example.demoSQL.entity.Customer;
+import com.example.demoSQL.entity.PeriodicalPayment;
 import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
@@ -15,9 +16,11 @@ import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.repository.TransactionRepository;
+import com.example.demoSQL.specification.PeriodicalPaymentSpecification;
 import com.example.demoSQL.specification.TransactionSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -46,6 +49,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
+    @CacheEvict(value = "accounts", key ="transactionCreateDTO.accountId")
     public ApiResponse<Object> deposit(TransactionCreateDTO transactionCreateDTO) {
         try{
             Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
@@ -69,19 +73,16 @@ public class TransactionServiceImpl implements TransactionService {
             account.setBalance(account.getBalance().add(transactionCreateDTO.getAmount()));
             transactionRepository.save(transaction);
             return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch(EntityNotFoundException e) {
-            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-
         } catch(Exception e){
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-
     }
 
     @Override
     @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
+    @CacheEvict(value = "accounts", key ="transactionCreateDTO.accountId")
     public ApiResponse<Object> withdraw(TransactionCreateDTO transactionCreateDTO) {
         try{
             Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
@@ -122,6 +123,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
+    @CacheEvict(value = "accounts", key ="transactionCreateDTO.accountId")
     public ApiResponse<Object> transfer(TransactionCreateDTO transactionCreateDTO){
         try{
             Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
@@ -184,19 +186,19 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "transactions")
     public ApiResponse<Object> searchTransactions(TransactionSearchDTO dto, Pageable pageable){
         try{
-                Specification<Transaction> spec =
-                        TransactionSpecification.hasType(dto.getType())
-                                .and(TransactionSpecification.hasAccountId(dto.getAccountId()))
-                                .and(TransactionSpecification.hasReceiverId(dto.getReceiverId()))
-                                .and(TransactionSpecification.hasMinAmount(dto.getMinAmount()))
-                                .and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()))
-                                .and(TransactionSpecification.occurredBefore(dto.getFrom()))
-                                .and(TransactionSpecification.occurredAfter(dto.getTo()))
-                                .and(TransactionSpecification.hasChecked(dto.getChecked()))
-                                .and(TransactionSpecification.hasLocation(dto.getLocation()));
+            Specification<Transaction> spec = (root, query, builder) -> builder.conjunction(); // base
+
+            spec = spec.and(TransactionSpecification.hasAccountId(dto.getAccountId()));
+            spec = spec.and(TransactionSpecification.hasReceiverId(dto.getReceiverId()));
+            spec = TransactionSpecification.hasType(dto.getType());
+            spec = spec.and(TransactionSpecification.hasMinAmount(dto.getMinAmount()));
+            spec = spec.and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()));
+            spec = spec.and(TransactionSpecification.occurredBefore(dto.getFrom()));
+            spec = spec.and(TransactionSpecification.occurredAfter(dto.getTo()));
+            spec = spec.and(TransactionSpecification.hasChecked(dto.getChecked()));
+            spec = spec.and(TransactionSpecification.hasLocation(dto.getLocation()));
                 return new ApiResponse<>(transactionRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -205,23 +207,23 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "transactions")
     public ApiResponse<Object> selfTransactionSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable){
         try{
             Optional<Account> optionalAccount = accountRepository.findById(id);
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-            Specification<Transaction> baseSpec = TransactionSpecification.hasAccountId(id)
-                    .or(TransactionSpecification.hasReceiverId(id));
 
-            Specification<Transaction> spec = baseSpec
-                    .and(TransactionSpecification.hasMinAmount(dto.getMinAmount()))
-                    .and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()))
-                    .and(TransactionSpecification.hasLocation(dto.getLocation()))
-                    .and(TransactionSpecification.occurredBefore(dto.getTo()))
-                    .and(TransactionSpecification.occurredAfter(dto.getFrom()))
-                    .and(TransactionSpecification.hasChecked(dto.getChecked()));
+            Specification<Transaction> spec = (root, query, builder) -> builder.conjunction(); // base
+            spec = spec.and(TransactionSpecification.hasAccountId(id)
+                    .or(TransactionSpecification.hasReceiverId(id)));
+
+            spec = spec.and(TransactionSpecification.hasMinAmount(dto.getMinAmount()));
+            spec = spec.and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()));
+            spec = spec.and(TransactionSpecification.hasLocation(dto.getLocation()));
+            spec = spec.and(TransactionSpecification.occurredBefore(dto.getTo()));
+            spec = spec.and(TransactionSpecification.occurredAfter(dto.getFrom()));
+            spec = spec.and(TransactionSpecification.hasChecked(dto.getChecked()));
 
 
             return new ApiResponse<>(transactionRepository.findAll(spec, pageable), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());

@@ -27,26 +27,36 @@ public class CustomerController {
     private final CustomerService customerService;
 
 
+
     @PostMapping
     public ApiResponse<Object> createCustomer(@Valid @RequestBody CustomerCreateDTO customerCreateDTO){
         return customerService.createCustomer(customerCreateDTO);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @PutMapping("/{id}")
     public ApiResponse<Object> updateCustomer(@PathVariable Long id, @Valid @RequestBody CustomerUpdateDTO customerUpdateDTO){
         return customerService.updateCustomer(id,customerUpdateDTO);
     }
+
+    @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping("/{id}")
     public ApiResponse<Object> getCustomerById(@PathVariable Long id){
         return customerService.getCustomerById(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
     public ApiResponse<Object> getAllCustomer
             (@PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return customerService.getAll(pageable);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @SecurityRequirement(name = "Bearer Authentication")
     @PostMapping("/search")
     public ApiResponse<Object> searchCustomers(@Valid @RequestBody CustomerSearchDTO customerSearchDTO, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
         return customerService.searchCustomers(customerSearchDTO, pageable);

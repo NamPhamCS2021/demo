@@ -19,7 +19,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
-
+@SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/transactions")
 @Validated
@@ -28,37 +28,43 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#transactionCreateDTO.accountId)")
     @PostMapping("/deposit")
     public ResponseEntity<ApiResponse<Object>> deposit(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
         return ResponseEntity.status(HttpStatus.CREATED).body(transactionService.deposit(transactionCreateDTO));
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#transactionCreateDTO.accountId)")
     @PostMapping("/withdraw")
     public ApiResponse<Object> withdraw(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
         return transactionService.withdraw(transactionCreateDTO);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#transactionCreateDTO.accountId)")
     @PostMapping("/transfer")
     public ApiResponse<Object> transfer(@Valid @RequestBody TransactionCreateDTO transactionCreateDTO){
         return transactionService.transfer(transactionCreateDTO);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfTransaction(#id)")
     @GetMapping("/{id}")
     public ApiResponse<Object> getTransaction(@PathVariable Long id){
         return transactionService.getTransaction(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/searchh")
     public ApiResponse<Object> searchTransactions( @Valid @RequestBody TransactionSearchDTO dto, @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
         return transactionService.searchTransactions(dto, pageable);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccount(#accountId)")
     @PutMapping("/account/{accountId}/search")
     public ApiResponse<Object> selfSearchTransactions(@PathVariable Long accountId, @Valid @RequestBody TransactionUserSearchDTO dto, @PageableDefault(size = 20,sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
         return transactionService.selfTransactionSearch(accountId,dto,pageable);
     }
 
-
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @GetMapping("locationcount")
     public ApiResponse<Object> countTransactionsByLocation(){
         return transactionService.countTransactionsByLocation();

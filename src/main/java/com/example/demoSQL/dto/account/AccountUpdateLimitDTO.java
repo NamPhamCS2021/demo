@@ -1,5 +1,6 @@
 package com.example.demoSQL.dto.account;
 
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,5 +11,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Data
 public class AccountUpdateLimitDTO {
+    @PositiveOrZero
     private BigDecimal accountLimit;
 }

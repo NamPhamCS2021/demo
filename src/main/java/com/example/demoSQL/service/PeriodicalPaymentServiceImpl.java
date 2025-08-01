@@ -129,6 +129,16 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> searchPeriodicalPayment(PeriodicalPaymentSearchDTO dto, Pageable pageable) {
         try{
+
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if((dto.getStartedAfter() != null && dto.getStartedBefore() != null && dto.getStartedBefore().isAfter(dto.getStartedAfter()))
+            || (dto.getEndedAfter() != null && dto.getEndedBefore() != null && dto.getEndedBefore().isAfter(dto.getEndedAfter()))
+            || (dto.getMinAmount() != null && dto.getMaxAmount() != null && dto.getMinAmount().compareTo(dto.getMaxAmount()) > 0)){
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Specification<PeriodicalPayment> spec = (root, query, builder) -> builder.conjunction(); // base
 
             spec = spec.and(PeriodicalPaymentSpecification.hasAccount(dto.getAccountId()));
@@ -150,6 +160,16 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> selfSearchPeriodicalPayment(Long id, PeriodicalPaymentUserSearchDTO dto, Pageable pageable) {
         try{
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if((dto.getStartedAfter() != null && dto.getStartedBefore() != null && dto.getStartedBefore().isAfter(dto.getStartedAfter()))
+                    || (dto.getEndedAfter() != null && dto.getEndedBefore() != null && dto.getEndedAfter().isAfter(dto.getEndedAfter()))
+                    || (dto.getMinAmount() != null && dto.getMaxAmount() != null && dto.getMinAmount().compareTo(dto.getMaxAmount()) > 0)){
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
+
             Optional<Account> optionalAccount = accountRepository.findById(id);
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());

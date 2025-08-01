@@ -184,6 +184,13 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> searchTransactions(TransactionSearchDTO dto, Pageable pageable){
         try{
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+            if((dto.getFrom() != null && dto.getTo() != null && dto.getFrom().isAfter(dto.getTo()))
+            || (dto.getMinAmount() != null && dto.getMaxAmount() != null && dto.getMinAmount().compareTo(dto.getMaxAmount()) > 0)) {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Specification<Transaction> spec = (root, query, builder) -> builder.conjunction(); // base
 
             spec = spec.and(TransactionSpecification.hasAccountId(dto.getAccountId()));
@@ -207,6 +214,14 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> selfTransactionSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable){
         try{
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+            if((dto.getFrom() != null && dto.getTo() != null && dto.getFrom().isAfter(dto.getTo()))
+                    || (dto.getMinAmount() != null && dto.getMaxAmount() != null && dto.getMinAmount().compareTo(dto.getMaxAmount()) > 0)) {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
+
             Optional<Account> optionalAccount = accountRepository.findById(id);
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());

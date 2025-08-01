@@ -70,6 +70,15 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
     @Transactional(readOnly = true)
     public ApiResponse<Object> search(AccountStatusHistorySearchDTO dto, Pageable pageable) {
         try{
+
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if((dto.getStart() != null && dto.getEnd() != null && dto.getStart().isAfter(dto.getEnd())))
+            {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Specification<AccountStatusHistory> spec = (root, query, builder) -> builder.conjunction(); // base
 
             spec = spec.and(AccountStatusHistorySpecification.hasAccount(dto.getAccountId()));
@@ -88,6 +97,15 @@ public class AccountStatusHistoryServiceImpl implements AccountStatusHistoryServ
     @Transactional(readOnly = true)
     public ApiResponse<Object> selfSearch(Long id, AccountStatusHistoryUserSearchDTO dto, Pageable pageable) {
         try{
+
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if((dto.getEnd() != null && dto.getStart() != null && dto.getStart().isAfter(dto.getEnd())))
+            {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Optional<Account> optionalAccount = accountRepository.findById(id);
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());

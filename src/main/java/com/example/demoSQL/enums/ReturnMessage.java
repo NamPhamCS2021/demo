@@ -13,7 +13,9 @@ public enum ReturnMessage {
     INACTIVE("04", "Account is not active"),
     INSUFFICIENT_BALANCE("05", "Mot enough balance"),
     OFF_LIMIT("06", "Limit exceeded"),
-    ALREADY_EXISTED("07", "Mail or phone is already registered");
+    ALREADY_EXISTED("07", "Mail or phone is already registered"),
+    NULL_VALUE("08", "Null value"),
+    INVALID_ARGUMENTS("09", "Invalid arguments");
     private final String code;
     private final String message;
 }

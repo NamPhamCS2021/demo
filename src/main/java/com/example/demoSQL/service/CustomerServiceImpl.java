@@ -132,6 +132,14 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public ApiResponse<Object> searchCustomers(CustomerSearchDTO dto, Pageable pageable) {
         try{
+
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if(dto.getFrom().isAfter(dto.getTo())){
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Specification<Customer> spec = (root, query, builder) -> builder.conjunction(); // base
 
             spec = spec.and(CustomerSpecification.hasFirstName(dto.getFirstName()));

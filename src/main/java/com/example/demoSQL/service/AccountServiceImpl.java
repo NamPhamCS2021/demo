@@ -194,6 +194,16 @@ public class AccountServiceImpl implements AccountService {
     public ApiResponse<Object> searchAccounts(AccountSearchDTO dto, Pageable pageable) {
         try{
 
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if((dto.getMinLimit() != null && dto.getMaxLimit() != null && dto.getMinLimit().compareTo(dto.getMaxLimit()) > 0)
+                    ||(dto.getMinBalance() != null && dto.getMaxBalance() != null && dto.getMinBalance().compareTo(dto.getMaxBalance()) > 0))
+            {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
+
             Specification<Account> spec = (root, query, builder) -> builder.conjunction(); // base
 
             spec = spec.and(AccountSpecification.hasCustomer(dto.getCustomerId()));
@@ -216,6 +226,15 @@ public class AccountServiceImpl implements AccountService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO dto, Pageable pageable) {
         try {
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if((dto.getMinBalance() != null && dto.getMaxBalance() != null && dto.getMinBalance().compareTo(dto.getMaxBalance()) > 0) ||
+                    (dto.getMinLimit() != null && dto.getMaxLimit() != null && dto.getMinLimit().compareTo(dto.getMaxLimit()) > 0))
+            {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             log.info("Search DTO - status: {}, minBalance: {}, maxBalance: {}, minLimit: {}, maxLimit: {}, from: {}, to: {}",
                     dto.getStatus(), dto.getMinBalance(), dto.getMaxBalance(),
                     dto.getMinLimit(), dto.getMaxLimit(), dto.getFrom(), dto.getTo());

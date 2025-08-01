@@ -247,6 +247,15 @@ public class AlertServiceImpl implements AlertService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> search(AlertSearchDTO alertSearchDTO, Pageable pageable) {
         try{
+
+            if(alertSearchDTO == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if(alertSearchDTO.getStart() != null && alertSearchDTO.getEnd() != null && alertSearchDTO.getStart().isAfter(alertSearchDTO.getEnd()))
+            {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Specification<Alert> spec = (root, query, builder) -> builder.conjunction(); // base
 
             spec = spec.and(AlertSpecification.hasTransaction(alertSearchDTO.getTransactionId()));
@@ -266,6 +275,14 @@ public class AlertServiceImpl implements AlertService {
     @Transactional(readOnly = true)
     public ApiResponse<Object> selfSearch(Long id, AlertUserSearchDTO alertUserSearchDTO, Pageable pageable) {
         try{
+            if(alertUserSearchDTO == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+
+            if(alertUserSearchDTO.getStart() != null && alertUserSearchDTO.getEnd() != null && alertUserSearchDTO.getStart().isAfter(alertUserSearchDTO.getEnd()))
+            {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
             Optional<Transaction> optionalTransaction = transactionRepository.findById(id);
             if(optionalTransaction.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());

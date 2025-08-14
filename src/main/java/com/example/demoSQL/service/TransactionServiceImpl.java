@@ -45,7 +45,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    @CacheEvict(value = "accounts", key ="transactionCreateDTO.accountId")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountId")
     public ApiResponse<Object> deposit(TransactionCreateDTO transactionCreateDTO) {
         try{
             Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
@@ -78,7 +78,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    @CacheEvict(value = "accounts", key ="transactionCreateDTO.accountId")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountId")
     public ApiResponse<Object> withdraw(TransactionCreateDTO transactionCreateDTO) {
         try{
             Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
@@ -119,7 +119,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    @CacheEvict(value = "accounts", key ="transactionCreateDTO.accountId")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountId")
     public ApiResponse<Object> transfer(TransactionCreateDTO transactionCreateDTO){
         try{
             Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());

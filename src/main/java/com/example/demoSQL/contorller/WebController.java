@@ -1,4 +1,4 @@
-package com.example.demoSQL.controller;
+package com.example.demoSQL.contorller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -73,5 +73,14 @@ public class WebController {
             return "redirect:/dashboard";
         }
         return "redirect:/login";
+    }
+    @GetMapping("/account/{accountId}/details")
+    public String accountDetailsPage(@PathVariable Long accountId, Model model) {
+        model.addAttribute("pageTitle", "Account Details");
+        model.addAttribute("accountId", accountId);
+        model.addAttribute("currentTime", LocalDateTime.now());
+        model.addAttribute("welcomeMessage", "View your account details and transaction history");
+
+        return "account-details"; // -> templates/account-details.html
     }
 }

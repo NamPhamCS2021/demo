@@ -5,6 +5,7 @@ import com.example.demoSQL.security.service.UserDetailsServiceImpl;
 import com.example.demoSQL.security.utils.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -61,12 +62,28 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private String extractToken(HttpServletRequest request) {
+        // 1. Try Authorization header
         String authHeader = request.getHeader("Authorization");
-
-        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+        if (StringUtils.hasText(authHeader) && authHeader.toLowerCase().startsWith("bearer ")) {
+            return authHeader.substring(7).trim();
         }
+
+        // 2. Try cookies
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("jwt".equals(cookie.getName())) {
+                    String value = cookie.getValue();
+                    if (StringUtils.hasText(value)) {
+                        return value.trim();
+                    }
+                }
+            }
+        }
+
+        // 3. No token found
         return null;
     }
+
 
 }

@@ -14,4 +14,5 @@ public interface CustomerService {
     ApiResponse<Object> getAll(Pageable pageable);
     ApiResponse<Object> getCustomerById(Long id);
     ApiResponse<Object> searchCustomers(CustomerSearchDTO dto, Pageable pageable);
+
 }

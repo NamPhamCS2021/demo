@@ -1,5 +1,7 @@
 package com.example.demoSQL.security.service;
 
+import com.example.demoSQL.dto.ApiResponse;
+import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.enums.UserRole;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.model.AuthRequest;
@@ -8,6 +10,8 @@ import com.example.demoSQL.security.model.SignUpResponse;
 import com.example.demoSQL.security.model.UserDetailsImpl;
 import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.security.utils.JwtUtil;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -47,37 +51,33 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public ResponseEntity<AuthResponse> login(AuthRequest request) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
-        Date expirationTime = new Date();
+    public ApiResponse<Object> login(AuthRequest request, HttpServletResponse response) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
+
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateJwtToken(authentication);
 
-        if (authentication != null) {
-            System.out.println("Principal: " + authentication.getPrincipal());
-            System.out.println("Authorities: " + authentication.getAuthorities());
-            System.out.println("Details: " + authentication.getDetails());
-            System.out.println("Authenticated: " + authentication.isAuthenticated());
-            System.out.println("Name: " + authentication.getName());
-        } else {
-            System.out.println("No authentication found in SecurityContextHolder.");
-        }
-
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        AuthResponse authResponse = new AuthResponse();
+        authResponse.setToken(jwt);
+        authResponse.setUsername(userDetails.getUsername());
+        authResponse.setExpirationTime(new Date(System.currentTimeMillis() + 720000));
 
-        String roles = userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()).get(0);
+        // Set cookie here
+        Cookie cookie = new Cookie("jwt", jwt);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(7 * 24 * 60 * 60);
+        response.addCookie(cookie);
 
-        AuthResponse response = new AuthResponse();
-        response.setToken(jwt);
-        response.setUsername(userDetails.getUsername());
-        response.setExpirationTime(new Date(new Date().getTime() + 720000));
-
-
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>(authResponse, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
     }
 
+
     @Override
-    public ResponseEntity<SignUpResponse> adminRegister(AuthRequest authRequest) {
+    public ApiResponse<Object> adminRegister(AuthRequest authRequest) {
         User user = new User();
         user.setUsername(authRequest.getUsername());
         user.setPassword(passwordEncoder.encode(authRequest.getPassword()));
@@ -88,6 +88,6 @@ public class AuthServiceImpl implements AuthService {
         response.setUsername(user.getUsername());
         userRepository.save(user);
 
-        return ResponseEntity.ok(response);
+        return new ApiResponse<>(response, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
     }
 }

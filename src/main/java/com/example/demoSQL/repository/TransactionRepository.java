@@ -3,7 +3,7 @@ package com.example.demoSQL.repository;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.TransactionType;
-import org.springframework.cglib.core.Local;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

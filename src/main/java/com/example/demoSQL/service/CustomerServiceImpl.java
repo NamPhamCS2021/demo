@@ -59,6 +59,7 @@ public class CustomerServiceImpl implements CustomerService {
             user.setUsername(customerCreateDTO.getEmail());
             user.setRole(UserRole.USER);
             user.setPassword(passwordEncoder.encode("123456"));
+            customer.setUser(user);
             userRepository.save(user);
             customerRepository.save(customer);
 

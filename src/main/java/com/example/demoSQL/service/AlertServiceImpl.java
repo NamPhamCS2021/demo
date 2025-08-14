@@ -16,6 +16,7 @@ import com.example.demoSQL.repository.AlertRepository;
 import com.example.demoSQL.repository.TransactionRepository;
 import com.example.demoSQL.specification.AlertSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -42,6 +44,7 @@ public class AlertServiceImpl implements AlertService {
     private final TransactionRepository transactionRepository;
 
     private final Executor virtualExecutor;
+
 
 
 
@@ -58,12 +61,12 @@ public class AlertServiceImpl implements AlertService {
                         transaction.setChecked(true);
                         return result;
                     } catch (Exception e) {
-                        System.out.println("Error processing transaction with id " + transaction.getId());
+                        log.error("Error processing transaction with id " + transaction.getId());
                         return false;
                     } finally {
                         transactionRepository.save(transaction);
-                        System.out.println("Transaction with id " + transaction.getId() + " processed");
-                        System.out.println("---------------------------------------");
+                        log.info("Transaction with id " + transaction.getId() + " processed");
+                        log.info("---------------------------------------");
                     }
                 }, virtualExecutor)).toList();
 

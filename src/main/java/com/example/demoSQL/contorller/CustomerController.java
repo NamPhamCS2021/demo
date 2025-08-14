@@ -3,8 +3,13 @@ package com.example.demoSQL.contorller;
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
+import com.example.demoSQL.dto.customer.CustomerProfileRequest;
 import com.example.demoSQL.dto.customer.CustomerSearchDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
+import com.example.demoSQL.entity.Customer;
+import com.example.demoSQL.enums.CustomerType;
+import com.example.demoSQL.security.entity.User;
+import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.service.CustomerService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -12,8 +17,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -22,7 +34,7 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
-
+    private final UserRepository userRepository;
 
     @PostMapping
     public ApiResponse<Object> createCustomer(@Valid @RequestBody CustomerCreateDTO customerCreateDTO){
@@ -56,5 +68,42 @@ public class CustomerController {
     @PostMapping("/search")
     public ApiResponse<Object> searchCustomers(@Valid @RequestBody CustomerSearchDTO customerSearchDTO, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
         return customerService.searchCustomers(customerSearchDTO, pageable);
+    }
+    @GetMapping("/profile")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Object>> getCustomerProfile(Authentication auth) {
+        try {
+            Optional<User> userOpt = userRepository.findByUsername(auth.getName());
+
+            if (userOpt.isEmpty()) {
+                ApiResponse<Object> response = new ApiResponse<>(null, "01", "User not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            User user = userOpt.get();
+            Customer customer = user.getCustomer();
+
+            if (customer == null) {
+                // No customer profile exists yet
+                ApiResponse<Object> response = new ApiResponse<>(null, "02", "No customer profile found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            // Prepare customer data for frontend
+            Map<String, Object> customerData = new HashMap<>();
+            customerData.put("id", customer.getId());
+            customerData.put("firstName", customer.getFirstName());
+            customerData.put("lastName", customer.getLastName());
+            customerData.put("email", customer.getEmail());
+            customerData.put("phoneNumber", customer.getPhoneNumber());
+            customerData.put("type", customer.getType().toString());
+            customerData.put("createdDate", customer.getCreatedDate());
+
+            ApiResponse<Object> response = new ApiResponse<>(customerData, "00", "Customer profile retrieved successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            ApiResponse<Object> errorResponse = new ApiResponse<>(null, "03", "Failed to get customer profile: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
     }
 }

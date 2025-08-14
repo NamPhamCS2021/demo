@@ -1,11 +1,15 @@
 package com.example.demoSQL.security.service;
 
+import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.security.model.AuthRequest;
 import com.example.demoSQL.security.model.AuthResponse;
 import com.example.demoSQL.security.model.SignUpResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 
 public interface AuthService {
-    ResponseEntity<AuthResponse> login(AuthRequest authRequest);
-    ResponseEntity<SignUpResponse> adminRegister(AuthRequest authRequest);
+    ApiResponse<Object> login(AuthRequest authRequest, HttpServletResponse response);
+    ApiResponse<Object> adminRegister(AuthRequest authRequest);
+
 }

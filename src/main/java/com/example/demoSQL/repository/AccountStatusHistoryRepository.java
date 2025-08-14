@@ -15,8 +15,7 @@ import java.time.LocalDateTime;
 public interface AccountStatusHistoryRepository extends JpaRepository<AccountStatusHistory, Long>, JpaSpecificationExecutor<AccountStatusHistory> {
     boolean existsByAccountId(Long accountId);
     @Query("SELECT a FROM AccountStatusHistory a WHERE a.account.id = :accountId")
-    Page<AccountStatusHistory> findByAccountId(Long accountId, Pageable pageable);
+    Page<AccountStatusHistory> findByAccountId(@Param("accountId") Long accountId, Pageable pageable);
     @Query("SELECT a FROM AccountStatusHistory a WHERE (a.account.id = :accountId ) AND (a.timestamp BETWEEN :start AND :end)")
-    Page<AccountStatusHistory> findBetweenByAccountId(Long accountId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
-
+    Page<AccountStatusHistory> findBetweenByAccountId(@Param("accountId") Long accountId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end, Pageable pageable);
 }

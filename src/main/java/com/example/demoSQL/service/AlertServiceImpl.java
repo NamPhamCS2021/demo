@@ -83,9 +83,9 @@ public class AlertServiceImpl implements AlertService {
         }
 
 
-        LocalDateTime startTime = transaction.getTimestamp().minusSeconds(30);
+        LocalDateTime startTime = transaction.getCreatedAt().minusSeconds(30);
 
-        LocalDateTime endTime = transaction.getTimestamp().plusSeconds(30);
+        LocalDateTime endTime = transaction.getCreatedAt().plusSeconds(30);
 
         List<Transaction> transactionsOfAccountBetweenTime = transactionRepository.findBetweenTimeByAccount(transaction.getAccount().getId(), startTime, endTime);
         if(transactionsOfAccountBetweenTime.size() > 3){

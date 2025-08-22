@@ -67,8 +67,6 @@ public class CustomerServiceImpl implements CustomerService {
         } catch (Exception e){
             return new ApiResponse<>(ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-
-
     }
 
     @Override

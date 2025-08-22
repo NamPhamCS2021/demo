@@ -343,7 +343,7 @@
             }
 
             try {
-                const response = await fetch(`/api/accounts/${accountId}`, {
+                const response = await fetch(`/api/accounts/byAccountNumber/${accountId}`, {
                     method: 'GET',
                     credentials: 'include'
                 });
@@ -392,7 +392,7 @@
                     }
                 });
 
-                const response = await fetch(`/api/transactions/account/${accountId}/search?page=${page}&size=12&sort=timestamp,desc`, {
+                const response = await fetch(`/api/transactions/account/accountnumber/${accountId}/search`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

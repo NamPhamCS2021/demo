@@ -249,6 +249,43 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
+    public ApiResponse<Object> selfTransactionSearchByAccountNumber(String accountNumber, TransactionUserSearchDTO dto, Pageable pageable){
+        try{
+            if(dto == null) {
+                return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
+            }
+            if((dto.getFrom() != null && dto.getTo() != null && dto.getFrom().isAfter(dto.getTo()))
+                    || (dto.getMinAmount() != null && dto.getMaxAmount() != null && dto.getMinAmount().compareTo(dto.getMaxAmount()) > 0)) {
+                return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
+            }
+
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Account account = optionalAccount.get();
+            Specification<Transaction> spec = (root, query, builder) -> builder.conjunction(); // base
+            spec = spec.and(TransactionSpecification.hasAccountId(account.getId())
+                    .or(TransactionSpecification.hasReceiverId(account.getId())));
+
+            spec = spec.and(TransactionSpecification.hasMinAmount(dto.getMinAmount()));
+            spec = spec.and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()));
+            spec = spec.and(TransactionSpecification.hasLocation(dto.getLocation()));
+            spec = spec.and(TransactionSpecification.occurredBefore(dto.getTo()));
+            spec = spec.and(TransactionSpecification.occurredAfter(dto.getFrom()));
+            spec = spec.and(TransactionSpecification.hasChecked(dto.getChecked()));
+
+            Page<Transaction> transactionPage = transactionRepository.findAll(spec, pageable);
+            Page<TransactionResponseDTO> transactionResponseDTOPage = transactionPage.map(this::toTransactionResponseDTO);
+
+            return new ApiResponse<>(transactionResponseDTOPage, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ApiResponse<Object> countTransactionsByLocation(){
         try{
             List<LocationCount> locationCounts = transactionRepository.countTransactionsByLocation();
@@ -265,7 +302,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .receiverId(transaction.getReceiver() == null ? null : transaction.getReceiver().getId())
                 .amount(transaction.getAmount())
                 .type(transaction.getType())
-                .timestamp(transaction.getTimestamp())
+                .timestamp(transaction.getCreatedAt())
                 .location(transaction.getLocation())
                 .build();
     }

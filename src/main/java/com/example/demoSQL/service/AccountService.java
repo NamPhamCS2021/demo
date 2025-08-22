@@ -19,4 +19,7 @@ public interface AccountService {
     ApiResponse<Object> searchAccounts(AccountSearchDTO accountSearchDTO, Pageable pageable);
     ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO accountUserSearchDTO, Pageable pageable);
 
+    Long findAccountIdByAccountNumber(String accountNumber);
+
+    ApiResponse<Object> getAccountByAccountNumber(String accountNumber);
 }

@@ -1,5 +1,7 @@
 package com.example.demoSQL.contorller;
 
+import com.example.demoSQL.service.AccountService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,9 +11,11 @@ import org.springframework.security.core.Authentication;
 
 import java.time.LocalDateTime;
 
+@RequiredArgsConstructor
 @Controller
 public class WebController {
 
+    private final AccountService accountService;
     // Authentication pages
     @GetMapping("/login")
     public String loginPage(
@@ -54,15 +58,15 @@ public class WebController {
         return "profile"; // -> templates/profile.html
     }
 
-    // For future: Account details (when you get to this stage)
-    @GetMapping("/account/{accountId}")
-    public String accountDetailsPage(@PathVariable String accountId, Model model) {
-        model.addAttribute("pageTitle", "Account Details");
-        model.addAttribute("accountId", accountId);
-        model.addAttribute("currentTime", LocalDateTime.now());
-
-        return "account-details"; // -> templates/account-details.html
-    }
+//    // For future: Account details (when you get to this stage)
+//    @GetMapping("/account/{accountId}")
+//    public String accountDetailsPage(@PathVariable String accountId, Model model) {
+//        model.addAttribute("pageTitle", "Account Details");
+//        model.addAttribute("accountId", accountId);
+//        model.addAttribute("currentTime", LocalDateTime.now());
+//
+//        return "account-details"; // -> templates/account-details.html
+//    }
 
     // Root redirect
     @GetMapping("/")
@@ -74,11 +78,19 @@ public class WebController {
         }
         return "redirect:/login";
     }
-    @GetMapping("/account/{accountId}/details")
-    public String accountDetailsPage(@PathVariable Long accountId, Model model) {
+    @GetMapping("/account/{accountNumber}/details")
+    public String accountDetailsPageWithAccountNumber(@PathVariable String accountNumber, Model model) {
+        // You will need to call your service layer here to find the ID
+        Long accountId = accountService.findAccountIdByAccountNumber(accountNumber);
+
+        if (accountId == null) {
+            // Handle case where account number is not found
+            // Redirect to an error page or a "not found" page
+            return "redirect:/error";
+        }
+
         model.addAttribute("pageTitle", "Account Details");
         model.addAttribute("accountId", accountId);
-        model.addAttribute("currentTime", LocalDateTime.now());
         model.addAttribute("welcomeMessage", "View your account details and transaction history");
 
         return "account-details"; // -> templates/account-details.html

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component("authSecurity")
 @RequiredArgsConstructor
 public class AuthSecurity {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthSecurity.class);
 
     private final CustomerRepository customerRepository;
 
@@ -47,6 +48,30 @@ public class AuthSecurity {
                 .map(a -> a.getCustomer().getEmail().equals(getCurrentEmail()))
                 .orElse(false);
     }
+    public boolean isOwnerOfAccountByAccountNumber(String accountNumber) {
+        if (isAdmin()) {
+            return true;
+        }
+        String currentEmail = getCurrentEmail();
+
+        return accountRepository.findByAccountNumber(accountNumber)
+                .map(account -> {
+                    String ownerEmail = account.getCustomer().getEmail();
+
+                    // 🔍 Log both values for debugging
+                    log.debug("Validating account ownership: accountNumber={}, ownerEmail={}, currentEmail={}",
+                            accountNumber, ownerEmail, currentEmail);
+
+                    return ownerEmail != null && currentEmail != null &&
+                            ownerEmail.trim().equalsIgnoreCase(currentEmail.trim());
+                })
+                .orElseGet(() -> {
+                    log.debug("No account found with accountNumber={}", accountNumber);
+                    return false;
+                });
+    }
+
+
 
     public boolean isOwnerOfPayment(Long paymentId) {
         if(isAdmin()) {

@@ -40,7 +40,7 @@ public class Transaction {
     private BigDecimal amount;
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
+    private LocalDateTime createdAt;
 
     @Column(nullable = false)
     private String location;
@@ -55,6 +55,6 @@ public class Transaction {
     public void initialiseTransaction() {
 
         this.checked = false;
-        this.timestamp = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
     }
 }

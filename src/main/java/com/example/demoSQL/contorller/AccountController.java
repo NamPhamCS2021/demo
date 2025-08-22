@@ -87,6 +87,11 @@ public class AccountController {
         return accountService.searchSelfAccounts(id, dto, pageable);
     }
 
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
+    @GetMapping("/byAccountNumber/{accountNumber}")
+    public ApiResponse<Object> getAccountByAccountNumber(@PathVariable String accountNumber) {
+        return accountService.getAccountByAccountNumber(accountNumber);
+    }
 
 
 }

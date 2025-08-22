@@ -28,54 +28,54 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     @Query("SELECT t FROM Transaction t WHERE t.checked = false")
     List<Transaction> findByCheckedFalse();
 
-    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.createdAt BETWEEN :start AND :end")
     BigDecimal getTotalTransactionAmountBetween(LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT AVG(t.amount) FROM Transaction t WHERE t.timestamp BETWEEN :start and :end")
+    @Query("SELECT AVG(t.amount) FROM Transaction t WHERE t.createdAt BETWEEN :start and :end")
     BigDecimal getAvgTransactionAmountBetween(LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.timestamp BETWEEN :startDate AND :endDate")
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.createdAt BETWEEN :startDate AND :endDate")
     Long countAllTransactionByDate(LocalDateTime startDate, LocalDateTime endDate);
 
 
-    @Query("SELECT t from Transaction t WHERE t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT t from Transaction t WHERE t.createdAt BETWEEN :start AND :end")
     List<Transaction> findBetweenTime(LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT MAX(t.amount) from Transaction t WHERE t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT MAX(t.amount) from Transaction t WHERE t.createdAt BETWEEN :start AND :end")
     Transaction findBiggestTransactionBetweenTime (LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT MIN(t.amount) from Transaction t WHERE t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT MIN(t.amount) from Transaction t WHERE t.createdAt BETWEEN :start AND :end")
     Transaction findSmallestTransactionBetweenTime(LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId AND t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId AND t.createdAt BETWEEN :start AND :end")
     List<Transaction> findBetweenTimeByAccount(Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT COUNT(t) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND t.createdAt BETWEEN :start AND :end")
     Long countTransactionBetweenTimeByAccount(Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.receiver.id = :receiverId AND t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.receiver.id = :receiverId AND t.createdAt BETWEEN :start AND :end")
     Long countTransactionBetweenTimeByReceiver(Long receiverId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT Count(t) FROM Transaction t WHERE t.account.accountNumber = :accountNumber AND t.timestamp BETWEEN :start AND :end")
+    @Query("SELECT Count(t) FROM Transaction t WHERE t.account.accountNumber = :accountNumber AND t.createdAt BETWEEN :start AND :end")
     Long countBetweenTimeByAccountNumber(String accountNumber, LocalDateTime start, LocalDateTime end);
 
 
 
-    @Query("SELECT COUNT(t) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.timestamp BETWEEN :start AND :end)")
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     Long countBetweenTimeByAccountId(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT MAX(t.amount) FROM Transaction t WHERE (t.account.id = :accountId) AND (t.timestamp BETWEEN :start AND :end)")
+    @Query("SELECT MAX(t.amount) FROM Transaction t WHERE (t.account.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     BigDecimal findBiggestTransactionBetweenTimeByAccountId(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT MIN(t.amount) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.timestamp BETWEEN :start AND :end)")
+    @Query("SELECT MIN(t.amount) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     BigDecimal findSmallestTransactionBetweenTimeByAccountId(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT AVG(t.amount) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.timestamp BETWEEN :start AND :end)")
+    @Query("SELECT AVG(t.amount) FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     BigDecimal findAverageTransactionBetweenTimeByAccountId(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT SUM(t.amount) from Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.timestamp BETWEEN :start AND :END)")
+    @Query("SELECT SUM(t.amount) from Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     BigDecimal findTotalTransactionAmountByAccountId(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end);
 
-    @Query("SELECT t FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.timestamp BETWEEN :start AND :end)")
+    @Query("SELECT t FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     List<Transaction> findBetweenTimeByAccountIdAndType(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end, TransactionType type);
 }

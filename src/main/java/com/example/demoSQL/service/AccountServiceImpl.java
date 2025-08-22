@@ -270,6 +270,24 @@ public class AccountServiceImpl implements AccountService {
         }
     }
 
+
+
+    @Override
+    public Long findAccountIdByAccountNumber(String accountNumber){
+        Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+        return optionalAccount.map(Account::getId).orElse(null);
+    }
+
+    @Override
+    public ApiResponse<Object> getAccountByAccountNumber(String accountNumber) {
+        Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+        if(optionalAccount.isEmpty()){
+            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+        }
+        Account account = optionalAccount.get();
+        return new ApiResponse<>(toAccountResponseDTO(account), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+    }
+
     //helper
     public AccountResponseDTO toAccountResponseDTO(Account account){
         return AccountResponseDTO.builder()

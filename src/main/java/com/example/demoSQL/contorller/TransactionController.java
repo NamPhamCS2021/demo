@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +60,7 @@ public class TransactionController {
 
     @PreAuthorize("@authSecurity.isOwnerOfAccount(#accountId)")
     @PutMapping("/account/{accountId}/search")
-    public ApiResponse<Object> selfSearchTransactions(@PathVariable Long accountId, @Valid @RequestBody TransactionUserSearchDTO dto, @PageableDefault(size = 20,sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
+    public ApiResponse<Object> selfTransactionSearch(@PathVariable Long accountId, @Valid @RequestBody TransactionUserSearchDTO dto, @PageableDefault(size = 20,sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
         return transactionService.selfTransactionSearch(accountId,dto,pageable);
     }
 
@@ -67,5 +68,11 @@ public class TransactionController {
     @GetMapping("locationcount")
     public ApiResponse<Object> countTransactionsByLocation(){
         return transactionService.countTransactionsByLocation();
+    }
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
+    @PutMapping("account/accountnumber/{accountNumber}/search")
+    public ApiResponse<Object>selfTransactionSearchByAccountNumber(@PathVariable("accountNumber") String accountNumber, @Valid@RequestBody TransactionUserSearchDTO dto,
+                                                                   @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return transactionService.selfTransactionSearchByAccountNumber(accountNumber, dto, pageable);
     }
 }

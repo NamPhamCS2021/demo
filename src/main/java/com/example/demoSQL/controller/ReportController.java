@@ -1,4 +1,4 @@
-package com.example.demoSQL.contorller;
+package com.example.demoSQL.controller;
 
 import com.example.demoSQL.service.ReportService;
 import com.example.demoSQL.util.PDFExportUtil;

@@ -1,13 +1,11 @@
-package com.example.demoSQL.contorller;
+package com.example.demoSQL.controller;
 
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.CustomerCreateDTO;
-import com.example.demoSQL.dto.customer.CustomerProfileRequest;
 import com.example.demoSQL.dto.customer.CustomerSearchDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
 import com.example.demoSQL.entity.Customer;
-import com.example.demoSQL.enums.CustomerType;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.service.CustomerService;

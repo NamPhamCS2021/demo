@@ -95,4 +95,19 @@ public class WebController {
 
         return "account-details"; // -> templates/account-details.html
     }
+    @GetMapping("/statement")
+    public String statementsPage(@RequestParam(required = false) Long customerId, @RequestParam("year") int year, @RequestParam("month") int month,  Model model) {
+        model.addAttribute("pageTitle", "Statements");
+        model.addAttribute("welcomeMessage", "View your statements and transaction history");
+        model.addAttribute("year", year);
+        model.addAttribute("month", month);
+        if (customerId != null) {
+            model.addAttribute("customerId", customerId);
+        }
+        model.addAttribute("currentTime", LocalDateTime.now());
+
+        return "statement";
+    }
+
+
 }

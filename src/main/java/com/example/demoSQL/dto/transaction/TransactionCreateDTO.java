@@ -14,11 +14,17 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class TransactionCreateDTO {
-    @NotNull
+
+    public interface OnWithdraw{}
+    public interface OnTransfer{}
+
+    @NotNull(groups = {OnWithdraw.class, OnTransfer.class})
     private Long accountId;
+    @NotNull(groups = {OnTransfer.class})
     private Long receiverId;
     @PositiveOrZero
+    @NotNull(groups = {OnWithdraw.class, OnTransfer.class})
     private BigDecimal amount;
-    @NotNull
+    @NotNull(groups = {OnWithdraw.class, OnTransfer.class})
     private String location;
 }

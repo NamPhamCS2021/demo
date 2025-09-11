@@ -1,12 +1,10 @@
 package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
-import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
-import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
+import com.example.demoSQL.dto.transaction.*;
 import com.example.demoSQL.projections.LocationCount;
-import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
-import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.enums.TransactionType;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -34,4 +32,10 @@ public interface TransactionService {
     ApiResponse<Object> selfTransactionSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable);
 
     ApiResponse<Object> selfTransactionSearchByAccountNumber(String accountNumber, TransactionUserSearchDTO dto, Pageable pageable);
+
+    ApiResponse<Object> depositByAccountNumber(TransactionCreateANDTO transactionCreateDTO);
+
+    ApiResponse<Object> withdrawByAccountNumber(TransactionCreateANDTO transactionCreateDTO);
+
+    ApiResponse<Object> transferByAccountNumber(TransactionCreateANDTO transactionCreateDTO);
 }

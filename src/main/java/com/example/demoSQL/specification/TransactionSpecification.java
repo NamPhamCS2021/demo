@@ -36,12 +36,12 @@ public class TransactionSpecification {
 
     public static Specification<Transaction> occurredAfter(LocalDateTime from) {
         return (root, query, builder) ->
-                from == null ? null : builder.greaterThanOrEqualTo(root.get("timestamp"), from);
+                from == null ? null : builder.greaterThanOrEqualTo(root.get("createdAt"), from);
     }
 
     public static Specification<Transaction> occurredBefore(LocalDateTime to) {
         return (root, query, builder) ->
-                to == null ? null : builder.lessThanOrEqualTo(root.get("timestamp"), to);
+                to == null ? null : builder.lessThanOrEqualTo(root.get("createdAt"), to);
     }
 
     public static Specification<Transaction> hasChecked(Boolean checked) {

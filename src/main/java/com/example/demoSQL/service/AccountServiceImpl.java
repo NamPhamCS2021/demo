@@ -288,6 +288,21 @@ public class AccountServiceImpl implements AccountService {
         return new ApiResponse<>(toAccountResponseDTO(account), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
     }
 
+    @Override
+    public ApiResponse<Object> getReceiver(String accountNumber) {
+        Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+        if(optionalAccount.isEmpty()){
+            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+        }
+        Account account = optionalAccount.get();
+        ReceiverDTO receiverDTO = ReceiverDTO.builder().
+                accountNumber(account.getAccountNumber()).
+                status(account.getStatus()).
+                firstName(account.getCustomer().getFirstName()).
+                lastName(account.getCustomer().getLastName()).build();
+        return new ApiResponse<>(receiverDTO, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+    }
+
     //helper
     public AccountResponseDTO toAccountResponseDTO(Account account){
         return AccountResponseDTO.builder()

@@ -6,6 +6,7 @@ import com.example.demoSQL.dto.customer.CustomerCreateDTO;
 import com.example.demoSQL.dto.customer.CustomerSearchDTO;
 import com.example.demoSQL.dto.customer.CustomerUpdateDTO;
 import com.example.demoSQL.entity.Customer;
+import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.service.CustomerService;
@@ -74,7 +75,7 @@ public class CustomerController {
             Optional<User> userOpt = userRepository.findByUsername(auth.getName());
 
             if (userOpt.isEmpty()) {
-                ApiResponse<Object> response = new ApiResponse<>(null, "01", "User not found");
+                ApiResponse<Object> response = new ApiResponse<>(null, ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
@@ -83,7 +84,7 @@ public class CustomerController {
 
             if (customer == null) {
                 // No customer profile exists yet
-                ApiResponse<Object> response = new ApiResponse<>(null, "02", "No customer profile found");
+                ApiResponse<Object> response = new ApiResponse<>(null, ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
@@ -97,10 +98,10 @@ public class CustomerController {
             customerData.put("type", customer.getType().toString());
             customerData.put("createdDate", customer.getCreatedDate());
 
-            ApiResponse<Object> response = new ApiResponse<>(customerData, "00", "Customer profile retrieved successfully");
+            ApiResponse<Object> response = new ApiResponse<>(customerData, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            ApiResponse<Object> errorResponse = new ApiResponse<>(null, "03", "Failed to get customer profile: " + e.getMessage());
+            ApiResponse<Object> errorResponse = new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }

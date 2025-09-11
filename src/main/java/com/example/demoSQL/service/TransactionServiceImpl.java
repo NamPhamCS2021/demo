@@ -1,12 +1,9 @@
 package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
-import com.example.demoSQL.dto.transaction.TransactionSearchDTO;
-import com.example.demoSQL.dto.transaction.TransactionUserSearchDTO;
+import com.example.demoSQL.dto.transaction.*;
 import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.projections.LocationCount;
-import com.example.demoSQL.dto.transaction.TransactionCreateDTO;
-import com.example.demoSQL.dto.transaction.TransactionResponseDTO;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.AccountStatus;
@@ -14,8 +11,10 @@ import com.example.demoSQL.enums.TransactionType;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.repository.TransactionRepository;
+import com.example.demoSQL.security.authorization.AuthSecurity;
 import com.example.demoSQL.specification.TransactionSpecification;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,7 +28,7 @@ import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import java.util.List;
 import java.util.Optional;
 
-
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -39,6 +38,8 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
 
     private final AccountRepository accountRepository;
+
+    private final AuthSecurity authSecurity;
 
     private final CustomerRepository customerRepository;
 
@@ -113,7 +114,6 @@ public class TransactionServiceImpl implements TransactionService {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
-
     }
 
     @Override
@@ -291,6 +291,127 @@ public class TransactionServiceImpl implements TransactionService {
             List<LocationCount> locationCounts = transactionRepository.countTransactionsByLocation();
             return new ApiResponse<>(locationCounts, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "transactionsByAccountNumber", key = "#transactionCreateDTO.accountNumber")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountNumber")
+    public ApiResponse<Object> depositByAccountNumber(TransactionCreateANDTO transactionCreateDTO){
+        try{
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(transactionCreateDTO.getAccountNumber());
+
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
+
+            if(account.getStatus() != AccountStatus.ACTIVE){
+                return new ApiResponse<>(ReturnMessage.INACTIVE.getCode(), ReturnMessage.INACTIVE.getMessage());
+            }
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setAmount(transactionCreateDTO.getAmount());
+            transaction.setType(TransactionType.DEPOSIT);
+            transaction.setLocation(transactionCreateDTO.getLocation());
+
+            account.setBalance(account.getBalance().add(transactionCreateDTO.getAmount()));
+            transactionRepository.save(transaction);
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch(Exception e){
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "transactionsByAccountNumber", key = "#transactionCreateDTO.accountNumber")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountNumber")
+    public ApiResponse<Object> withdrawByAccountNumber(TransactionCreateANDTO transactionCreateDTO) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(transactionCreateDTO.getAccountNumber());
+
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
+
+            if(account.getStatus() != AccountStatus.ACTIVE){
+                return new ApiResponse<>(ReturnMessage.INACTIVE.getCode(), ReturnMessage.INACTIVE.getMessage());
+            }
+
+            if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ReturnMessage.INSUFFICIENT_BALANCE.getCode(), ReturnMessage.INSUFFICIENT_BALANCE.getMessage());
+            }
+            if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ReturnMessage.OFF_LIMIT.getCode(), ReturnMessage.OFF_LIMIT.getMessage());
+            }
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setAmount(transactionCreateDTO.getAmount());
+            transaction.setType(TransactionType.WITHDRAWAL);
+            transaction.setLocation(transactionCreateDTO.getLocation());
+
+            account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
+            transactionRepository.save(transaction);
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    @CachePut(value = "transactionsByAccountNumber", key = "#transactionCreateDTO.accountNumber")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountNumber")
+    public ApiResponse<Object> transferByAccountNumber(TransactionCreateANDTO transactionCreateDTO){
+        try{
+            log.info("DTO: accountnumbe: {}, receivernumber: {}, location: {}, amount: {}", transactionCreateDTO.getAccountNumber(), transactionCreateDTO.getReceiverAccountNumber(),
+                    transactionCreateDTO.getLocation(), transactionCreateDTO.getAmount());
+            authSecurity.isOwnerOfAccountByAccountNumber(transactionCreateDTO.getAccountNumber());
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(transactionCreateDTO.getAccountNumber());
+            Optional<Account> optionalReceiver = accountRepository.findByAccountNumber(transactionCreateDTO.getReceiverAccountNumber());
+
+
+            if(optionalAccount.isEmpty() || optionalReceiver.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
+            Account receiver = optionalReceiver.get();
+
+            if(account.getBalance().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ReturnMessage.INSUFFICIENT_BALANCE.getCode(), ReturnMessage.INSUFFICIENT_BALANCE.getMessage());
+            }
+            if(account.getStatus() != AccountStatus.ACTIVE){
+                return new ApiResponse<>(ReturnMessage.INACTIVE.getCode(), ReturnMessage.INACTIVE.getMessage());
+            }
+
+            if(account.getAccountLimit().compareTo(transactionCreateDTO.getAmount()) < 0){
+                return new ApiResponse<>(ReturnMessage.OFF_LIMIT.getCode(), ReturnMessage.OFF_LIMIT.getMessage());
+            }
+
+            Transaction transaction = new Transaction();
+            transaction.setAccount(account);
+            transaction.setAmount(transactionCreateDTO.getAmount());
+            transaction.setType(TransactionType.TRANSFER);
+            transaction.setReceiver(receiver);
+            transaction.setLocation(transactionCreateDTO.getLocation());
+
+            account.setBalance(account.getBalance().subtract(transactionCreateDTO.getAmount()));
+            receiver.setBalance(receiver.getBalance().add(transactionCreateDTO.getAmount()));
+            transactionRepository.save(transaction);
+            return new ApiResponse<>(toTransactionResponseDTO(transaction), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
         }
     }

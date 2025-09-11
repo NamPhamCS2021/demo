@@ -92,6 +92,11 @@ public class AccountController {
     public ApiResponse<Object> getAccountByAccountNumber(@PathVariable String accountNumber) {
         return accountService.getAccountByAccountNumber(accountNumber);
     }
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @GetMapping("/byAccountNumber/receiver/{accountNumber}")
+    public ApiResponse<Object> getReceiverByAccountNumber(@PathVariable String accountNumber) {
+        return accountService.getReceiver(accountNumber);
+    }
 
 
 }

@@ -22,4 +22,5 @@ public interface AccountService {
     Long findAccountIdByAccountNumber(String accountNumber);
 
     ApiResponse<Object> getAccountByAccountNumber(String accountNumber);
+    ApiResponse<Object> getReceiver(String accountNumber);
 }

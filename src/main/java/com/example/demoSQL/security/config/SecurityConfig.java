@@ -74,16 +74,26 @@ public class SecurityConfig {
                     .requestMatchers("swagger-resources/**").permitAll()
                     .requestMatchers("webjars/**").permitAll()
                     .requestMatchers("/error").permitAll()
+                    .requestMatchers("/api/data").permitAll()
                     .requestMatchers("/api/aLogin").permitAll()
                     .requestMatchers("/api/aSignup").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/customers").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/customers").permitAll()
-                    .requestMatchers("/api/customers/{id}").permitAll()
-                    .requestMatchers("/api/accounts/status/**").permitAll()
-                    .requestMatchers("/api/transactions/**").permitAll()
-                    .requestMatchers("/api/accountstatushistory/**").permitAll()
-                    .requestMatchers("/api/payments/**").permitAll()
-                    .requestMatchers("/dashboard").authenticated()
+                    .requestMatchers(
+                            "/css/**",
+                            "/js/**",
+                            "/images/**",
+                            "/webjars/**",
+                            "/favicon.ico",
+                            "/manifest.json",
+                            "/react/**",        // if you serve react.development.js under /react/
+                            "/babel/**"         // if you serve babel.min.js under /babel/
+                    ).permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/customers").authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/customers").authenticated()
+                    .requestMatchers("/api/customers/{id}").authenticated()
+                    .requestMatchers("/api/accounts/status/**").authenticated()
+                    .requestMatchers("/api/transactions/**").authenticated()
+                    .requestMatchers("/api/accountstatushistory/**").authenticated()
+                    .requestMatchers("/api/payments/**").authenticated()
                     .anyRequest().permitAll());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

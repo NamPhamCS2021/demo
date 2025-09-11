@@ -129,15 +129,21 @@ class DataPopulationService {
             Account account = accounts.get(random.nextInt(accounts.size()));
             transaction.setAccount(account);
 
-            // 30% chance of having a receiver (transfer)
-            if (random.nextDouble() < 0.3) {
-                Account receiver = accounts.get(random.nextInt(accounts.size()));
-                if (!receiver.equals(account)) {
-                    transaction.setReceiver(receiver);
-                }
-            }
+            // First decide the transaction type
+            TransactionType type = TransactionType.values()[random.nextInt(TransactionType.values().length)];
+            transaction.setType(type);
 
-            transaction.setType(TransactionType.values()[random.nextInt(TransactionType.values().length)]);
+            // Set receiver based on transaction type
+            if (type == TransactionType.TRANSFER) {
+                // TRANSFER must have a receiver
+                Account receiver;
+                do {
+                    receiver = accounts.get(random.nextInt(accounts.size()));
+                } while (receiver.equals(account)); // Ensure receiver is different from sender
+                transaction.setReceiver(receiver);
+            }
+            // WITHDRAWAL and DEPOSIT should not have a receiver (receiver remains null)
+
             transaction.setAmount(new BigDecimal(faker.number().numberBetween(10, 5000)));
             transaction.setLocation(faker.address().city());
 
@@ -269,7 +275,7 @@ class DataPopulationService {
 
 // Optional Controller for easy testing
 @RestController
-@RequestMapping("/api/admin/data")
+@RequestMapping("/api/data")
 @RequiredArgsConstructor
 public class DataPopulationController {
 

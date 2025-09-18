@@ -18,7 +18,7 @@ public interface AccountService {
     ApiResponse<Object> getAccountsByStatus(AccountStatus status, Pageable pageable);
     ApiResponse<Object> searchAccounts(AccountSearchDTO accountSearchDTO, Pageable pageable);
     ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO accountUserSearchDTO, Pageable pageable);
-
+    ApiResponse<Object> getAccountsByEmail(String email, Pageable pageable);
     Long findAccountIdByAccountNumber(String accountNumber);
 
     ApiResponse<Object> getAccountByAccountNumber(String accountNumber);

@@ -19,7 +19,7 @@ const UserDropdown = ({ user, onLogout }) => {
             React.createElement('li', null,
                 React.createElement('a', { className: 'dropdown-item', href: '/profile' },
                     React.createElement('i', { className: 'fas fa-user me-2' }),
-                    'Profile'
+                    'ProfileOld'
                 )
             ),
             React.createElement('li', null,

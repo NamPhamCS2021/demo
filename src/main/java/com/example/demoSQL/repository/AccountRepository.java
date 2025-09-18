@@ -27,4 +27,6 @@ public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpec
     Long countAllAccountsByType(@Param("type") CustomerType type);
     @Query("SELECT a FROM Account a JOIN FETCH a.customer WHERE a.accountNumber = :accountNumber")
     Optional<Account> findByAccountNumber(String accountNumber);
+    @Query("SELECT a FROM Account  a WHERE a.customer.email = :email")
+    Page<Account> findAccountByEmail(String email, Pageable pageable);
 }

@@ -3,6 +3,7 @@ package com.example.demoSQL.controller;
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.account.*;
 import com.example.demoSQL.enums.AccountStatus;
+import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.service.AccountService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @SecurityRequirement(name = "Bearer Authentication")
@@ -96,6 +98,12 @@ public class AccountController {
     @GetMapping("/byAccountNumber/receiver/{accountNumber}")
     public ApiResponse<Object> getReceiverByAccountNumber(@PathVariable String accountNumber) {
         return accountService.getReceiver(accountNumber);
+    }
+
+    @GetMapping("/me")
+    public ApiResponse<Object> getMyAccounts(Authentication auth, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
+        String mail = auth.getName();
+        return accountService.getAccountsByEmail(mail, pageable);
     }
 
 

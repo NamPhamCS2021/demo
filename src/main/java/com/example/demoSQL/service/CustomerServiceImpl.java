@@ -156,12 +156,26 @@ public class CustomerServiceImpl implements CustomerService {
         }
     }
 
+    @Override
+    public ApiResponse<Object> getCustomerByEmail(String email) {
+        Optional<Customer> optionalCustomer= customerRepository.findByEmail(email);
+        if(optionalCustomer.isEmpty()){
+            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+        }
+        Customer customer = optionalCustomer.get();
+        return new ApiResponse<>(toCustomerResponse(customer), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+    }
+
     //helper
     private CustomerResponseDTO toCustomerResponse(Customer customer){
-        return CustomerResponseDTO.builder().id(customer.getId())
+        return CustomerResponseDTO.builder()
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
-                .email(customer.getEmail()).phoneNumber(customer.getPhoneNumber()).build();
+                .email(customer.getEmail())
+                .phoneNumber(customer.getPhoneNumber())
+                .type(customer.getType())
+                .createDate(customer.getCreatedDate()).build();
+
     }
 //    private CustomerSummaryDTO toCustomerSummaryDTO(Customer customer){
 //        return CustomerSummaryDTO.builder().firstName(customer.getFirstName())

@@ -51,7 +51,7 @@ public class WebController {
     // User profile page - detailed profile management
     @GetMapping("/profile")
     public String profilePage(Model model) {
-        model.addAttribute("pageTitle", "User Profile");
+        model.addAttribute("pageTitle", "User ProfileOld");
         model.addAttribute("welcomeMessage", "Manage your profile information");
         model.addAttribute("currentTime", LocalDateTime.now());
 

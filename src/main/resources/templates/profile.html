@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Demo</title>
+    <title>ProfileOld - Demo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
@@ -133,7 +133,7 @@
                 React.createElement('li', null,
                     React.createElement('a', { className: 'dropdown-item', href: '/profile' },
                         React.createElement('i', { className: 'fas fa-user me-2' }),
-                        'Profile'
+                        'ProfileOld'
                     )
                 ),
                 React.createElement('li', null,
@@ -435,7 +435,7 @@
                 };
 
                 const method = user.hasCustomerProfile ? 'PUT' : 'POST';
-                const url = '/api/customer/profile';
+                const url = '/api/customers/profile';
 
                 const response = await fetch(url, {
                     method: method,
@@ -528,7 +528,7 @@
 
         return React.createElement('div', { className: 'row' },
             React.createElement('div', { className: 'col-12' },
-                // Profile header
+                // ProfileOld header
                 React.createElement('div', { className: 'profile-card card shadow mb-4' },
                     React.createElement('div', { className: 'card-body text-center' },
                         React.createElement('img', {
@@ -606,7 +606,7 @@
                     )
                 ),
 
-                // Profile details
+                // ProfileOld details
                 React.createElement('div', { className: 'card shadow' },
                     React.createElement('div', { className: 'card-header' },
                         React.createElement('h5', { className: 'mb-0' },

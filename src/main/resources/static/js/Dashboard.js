@@ -237,7 +237,7 @@ console.log(">>> Dashboard.js loaded");
                 React.createElement('h4', { className: 'mb-4' }, 'Quick Actions'),
                 React.createElement(window.QuickActionCard, {
                     icon: 'fas fa-user-circle',
-                    title: 'My Profile',
+                    title: 'My ProfileOld',
                     description: 'View and edit your personal information',
                     href: '/profile'
                 }),

@@ -70,39 +70,8 @@ public class CustomerController {
     }
     @GetMapping("/profile")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Object>> getCustomerProfile(Authentication auth) {
-        try {
-            Optional<User> userOpt = userRepository.findByUsername(auth.getName());
-
-            if (userOpt.isEmpty()) {
-                ApiResponse<Object> response = new ApiResponse<>(null, ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            User user = userOpt.get();
-            Customer customer = user.getCustomer();
-
-            if (customer == null) {
-                // No customer profile exists yet
-                ApiResponse<Object> response = new ApiResponse<>(null, ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            // Prepare customer data for frontend
-            Map<String, Object> customerData = new HashMap<>();
-            customerData.put("id", customer.getId());
-            customerData.put("firstName", customer.getFirstName());
-            customerData.put("lastName", customer.getLastName());
-            customerData.put("email", customer.getEmail());
-            customerData.put("phoneNumber", customer.getPhoneNumber());
-            customerData.put("type", customer.getType().toString());
-            customerData.put("createdDate", customer.getCreatedDate());
-
-            ApiResponse<Object> response = new ApiResponse<>(customerData, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            ApiResponse<Object> errorResponse = new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
+    public ApiResponse<Object> getCustomerProfile(Authentication auth) {
+        String email = auth.getName();
+        return customerService.getCustomerByEmail(email);
     }
 }

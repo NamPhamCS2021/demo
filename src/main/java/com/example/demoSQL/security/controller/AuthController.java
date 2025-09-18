@@ -21,6 +21,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @RestController
@@ -59,5 +61,25 @@ public class AuthController {
     public ResponseEntity<String> checkAuth() {
         return ResponseEntity.ok("Authenticated");
     }
+
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        // Overwrite the JWT cookie with an expired one
+        ResponseCookie expiredCookie = ResponseCookie.from("jwt", "")
+                .path("/")            // must match the original cookie path
+                .httpOnly(true)       // same as your login cookie
+                .secure(false)        // set true if using HTTPS
+                .sameSite("Lax")      // or "Strict" depending on your setup
+                .maxAge(0)            // delete immediately
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString());
+
+        return ResponseEntity.ok(Map.of(
+                "resultCode", "00",
+                "resultMessage", "Logged out successfully"
+        ));
+    }
+
 }
  

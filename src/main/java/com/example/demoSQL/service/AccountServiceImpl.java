@@ -24,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -301,6 +303,17 @@ public class AccountServiceImpl implements AccountService {
                 firstName(account.getCustomer().getFirstName()).
                 lastName(account.getCustomer().getLastName()).build();
         return new ApiResponse<>(receiverDTO, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+    }
+
+    @Override
+    public ApiResponse<Object> getAccountsByEmail(String email, Pageable pageable) {
+        Optional<Customer> optionalCustomer = customerRepository.findByEmail(email);
+        if(optionalCustomer.isEmpty()){
+            return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+        }
+        Customer customer = optionalCustomer.get();
+        Page<Account> accountPage = accountRepository.findByCustomerId(customer.getId(), pageable);
+        return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
     }
 
     //helper

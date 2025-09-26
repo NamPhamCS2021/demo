@@ -1,3 +1,4 @@
+// ===== src/components/hooks/useAuth.jsx =====
 import { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 

@@ -1,31 +1,32 @@
-import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
+// ===== FILE: src/pages/Login.jsx =====
+import React, { useState } from 'react'
+import { useAuth } from '../hooks/useAuth.js'
 
-function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const { login } = useAuth();
+const Login = () => {
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState("")
+    const { login } = useAuth()
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError("");
+        e.preventDefault()
+        setLoading(true)
+        setError("")
 
         try {
-            const result = await login({ username: email, password });
+            const result = await login({ username: email, password })
             if (result.success) {
-                window.location.href = "/dashboard";
+                window.location.href = "/dashboard"
             } else {
-                setError(result.error || "Login failed");
+                setError(result.error || "Login failed")
             }
         } catch (err) {
-            setError("Network error: " + err.message);
+            setError("Network error: " + err.message)
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
-    };
+    }
 
     return (
         <div className="min-h-screen d-flex align-items-center justify-content-center bg-light">
@@ -34,7 +35,6 @@ function Login() {
                     <div className="col-md-6 col-lg-4">
                         <div className="card border-0 shadow-lg" style={{ borderRadius: '20px' }}>
                             <div className="card-body p-5">
-                                {/* Header */}
                                 <div className="text-center mb-4">
                                     <div className="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"
                                          style={{ width: '60px', height: '60px' }}>
@@ -44,7 +44,6 @@ function Login() {
                                     <p className="text-muted">Sign in to your account</p>
                                 </div>
 
-                                {/* Error Alert */}
                                 {error && (
                                     <div className="alert alert-danger rounded-pill" role="alert">
                                         <i className="fas fa-exclamation-triangle me-2" />
@@ -52,7 +51,6 @@ function Login() {
                                     </div>
                                 )}
 
-                                {/* Login Form */}
                                 <form onSubmit={handleSubmit}>
                                     <div className="mb-4">
                                         <label className="form-label fw-medium text-dark">Email Address</label>
@@ -109,7 +107,6 @@ function Login() {
                                     </button>
                                 </form>
 
-                                {/* Footer */}
                                 <div className="text-center mt-4">
                                     <small className="text-muted">
                                         Protected by industry-standard security
@@ -121,7 +118,7 @@ function Login() {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
-export default Login;
+export default Login

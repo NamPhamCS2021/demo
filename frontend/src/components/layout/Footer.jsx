@@ -1,3 +1,4 @@
+// ===== src/components/layout/Navbar.jsx =====
 import React from 'react';
 import { formatDateTime } from '../../utils/formatters';
 import Navbar from "./Navbar.jsx";

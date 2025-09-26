@@ -1,3 +1,5 @@
+// ===== src/components/ui/StatusBadge.jsx =====
+
 import React from 'react';
 
 const StatusBadge = ({ status }) => {

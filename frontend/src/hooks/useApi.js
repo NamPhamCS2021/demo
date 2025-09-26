@@ -1,3 +1,4 @@
+// ===== src/components/hooks/useApi.jsx =====
 import { useState, useEffect } from 'react';
 
 export const useApi = (apiCall, dependencies = []) => {

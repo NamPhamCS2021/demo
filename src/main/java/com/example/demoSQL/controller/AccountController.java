@@ -3,7 +3,6 @@ package com.example.demoSQL.controller;
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.account.*;
 import com.example.demoSQL.enums.AccountStatus;
-import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.service.AccountService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -105,6 +104,4 @@ public class AccountController {
         String mail = auth.getName();
         return accountService.getAccountsByEmail(mail, pageable);
     }
-
-
 }

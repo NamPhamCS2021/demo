@@ -8,7 +8,6 @@ import com.example.demoSQL.dto.alert.AlertUserSearchDTO;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Alert;
 import com.example.demoSQL.entity.Transaction;
-import com.example.demoSQL.enums.AlertStatus;
 import com.example.demoSQL.enums.AlertType;
 import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.repository.AccountRepository;
@@ -28,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -110,6 +110,31 @@ public class AlertServiceImpl implements AlertService {
         }
 
     }
+    public ApiResponse<Object> getByTransactionId(UUID transactionPublicId, Pageable pageable) {
+        try{
+            Optional<Transaction> optionalTransaction = transactionRepository.findByPublicId(transactionPublicId);
+            if(optionalTransaction.isEmpty()) {
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByTransactionPublicId(transactionPublicId, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e){
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
+
+    public ApiResponse<Object> getByAccountNumber(String accountNumber, Pageable pageable) {
+        try{
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
+            if(optionalAccount.isEmpty()) {
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Page<Alert> alerts = alertRepository.findByAccountNumber(accountNumber, pageable);
+            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
+    }
 
     private void createAlert(Transaction transaction, String description, AlertType type) {
         Alert alert = new Alert();
@@ -118,133 +143,7 @@ public class AlertServiceImpl implements AlertService {
         alert.setType(type);
         alertRepository.save(alert);
     }
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByTransactionId(Long transactionId, Pageable pageable) {
-        try{
-            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
-            if(optionalTransaction.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
 
-            Page<Alert> alerts = alertRepository.findByTransactionId(transactionId, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByTransactionIdAndType(Long transactionId, AlertType type, Pageable pageable) {
-        try{
-            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
-            if(optionalTransaction.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByTransactionIdAndType(transactionId, type, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByTransactionIdAndStatus(Long transactionId, AlertStatus status, Pageable pageable){
-        try{
-            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
-            if(optionalTransaction.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByTransactionIdAndStatus(transactionId, status, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByTransactionIdAndTypeAndStatus(Long transactionId, AlertType type, AlertStatus status, Pageable pageable) {
-        try{
-            Optional<Transaction> optionalTransaction = transactionRepository.findById(transactionId);
-            if(optionalTransaction.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByTransactionIdAndTypeAndStatus(transactionId, type, status, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByAccountId(Long accountId, Pageable pageable) {
-        try{
-            Optional<Account> optionalAccount = accountRepository.findById(accountId);
-            if(optionalAccount.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByAccountId(accountId, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByAccountIdAndType(Long accountId, AlertType type, Pageable pageable) {
-        try{
-            Optional<Account> optionalAccount = accountRepository.findById(accountId);
-            if(optionalAccount.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByAccountIdAndType(accountId, type, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByAccountIdAndStatus(Long accountId, AlertStatus status, Pageable pageable) {
-        try{
-            Optional<Account> optionalAccount = accountRepository.findById(accountId);
-            if(optionalAccount.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByAccountIdAndStatus(accountId, status, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getByAccountIdAndTypeAndStatus(Long accountId, AlertType type, AlertStatus status, Pageable pageable) {
-        try{
-            Optional<Account> optionalAccount = accountRepository.findById(accountId);
-            if(optionalAccount.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Alert> alerts = alertRepository.findByAccountIdAndTypeAndStatus(accountId, type, status, pageable);
-            return new ApiResponse<>(alerts.map(this::toAlertDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e){
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-    }
 
     @Override
     @Transactional(readOnly = true)
@@ -259,9 +158,15 @@ public class AlertServiceImpl implements AlertService {
             {
                 return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
             }
+            Optional<Transaction> optionalTransaction = transactionRepository.findByPublicId(alertSearchDTO.getTransactionPublicId());
+            if(optionalTransaction.isEmpty())
+            {
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Transaction transaction = optionalTransaction.get();
             Specification<Alert> spec = (root, query, builder) -> builder.conjunction(); // base
 
-            spec = spec.and(AlertSpecification.hasTransaction(alertSearchDTO.getTransactionId()));
+            spec = spec.and(AlertSpecification.hasTransaction(transaction.getId()));
             spec = spec.and(AlertSpecification.hasStatus(alertSearchDTO.getStatus()));
             spec = spec.and(AlertSpecification.hasType(alertSearchDTO.getType()));
             spec = spec.and(AlertSpecification.createdAfter(alertSearchDTO.getStart()));
@@ -276,7 +181,7 @@ public class AlertServiceImpl implements AlertService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> selfSearch(Long id, AlertUserSearchDTO alertUserSearchDTO, Pageable pageable) {
+    public ApiResponse<Object> selfSearch(UUID publicTransactionId, AlertUserSearchDTO alertUserSearchDTO, Pageable pageable) {
         try{
             if(alertUserSearchDTO == null) {
                 return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
@@ -286,13 +191,14 @@ public class AlertServiceImpl implements AlertService {
             {
                 return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
             }
-            Optional<Transaction> optionalTransaction = transactionRepository.findById(id);
+            Optional<Transaction> optionalTransaction = transactionRepository.findByPublicId(publicTransactionId);
             if(optionalTransaction.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
+            Transaction transaction = optionalTransaction.get();
             Specification<Alert> spec = (root, query, builder) -> builder.conjunction(); // base
 
-            spec = spec.and(AlertSpecification.hasTransaction(id));
+            spec = spec.and(AlertSpecification.hasTransaction(transaction.getId()));
             spec = spec.and(AlertSpecification.hasStatus(alertUserSearchDTO.getStatus()));
             spec = spec.and(AlertSpecification.hasType(alertUserSearchDTO.getType()));
             spec = spec.and(AlertSpecification.createdAfter(alertUserSearchDTO.getStart()));
@@ -307,8 +213,8 @@ public class AlertServiceImpl implements AlertService {
 
     private AlertDTO toAlertDTO(Alert alert) {
         return AlertDTO.builder()
-                .accountId(alert.getTransaction().getAccount().getId())
-                .transactionId(alert.getTransaction().getId())
+                .accountNumber(alert.getTransaction().getAccount().getAccountNumber())
+                .transactionPublicId(alert.getTransaction().getPublicId())
                 .description(alert.getDescription())
                 .type(alert.getType())
                 .status(alert.getStatus())

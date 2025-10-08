@@ -7,10 +7,11 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class AccountStatusHistorySearchDTO {
-    private Long accountId;
+    private String accountNumber;
     private AccountStatus status;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime start;

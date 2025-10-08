@@ -7,6 +7,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -19,9 +20,9 @@ public class TransactionCreateDTO {
     public interface OnTransfer{}
 
     @NotNull(groups = {OnWithdraw.class, OnTransfer.class})
-    private Long accountId;
+    private String accountNumber;
     @NotNull(groups = {OnTransfer.class})
-    private Long receiverId;
+    private String receiverNumber;
     @PositiveOrZero
     @NotNull(groups = {OnWithdraw.class, OnTransfer.class})
     private BigDecimal amount;

@@ -13,7 +13,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @SecurityRequirement(name = "Bearer Authentication")
-@RestController("/api/report")
+@RestController
+@RequestMapping("/api/report")
 @RequiredArgsConstructor
 public class ReportController {
 

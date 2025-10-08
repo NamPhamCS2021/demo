@@ -20,14 +20,14 @@ const fetchWithAuth = async (url, options = {}) => {
 }
 
 // Account Creation Modal Component
-const AccountCreationModal = ({ show, onHide, onAccountCreated, customerId }) => {
+const AccountCreationModal = ({ show, onHide, onAccountCreated, customerPublicId }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [success, setSuccess] = useState(false)
     const [newAccount, setNewAccount] = useState(null)
 
     const handleCreateAccount = async () => {
-        if (!customerId) {
+        if (!customerPublicId) {
             setError('Customer ID is required')
             return
         }
@@ -38,7 +38,7 @@ const AccountCreationModal = ({ show, onHide, onAccountCreated, customerId }) =>
         try {
             const result = await fetchWithAuth('/api/accounts', {
                 method: 'POST',
-                body: JSON.stringify({ customerId })
+                body: JSON.stringify({ customerPublicId })
             })
             if (result.resultCode === '00') {
                 setNewAccount(result.data)
@@ -126,7 +126,7 @@ const AccountCreationModal = ({ show, onHide, onAccountCreated, customerId }) =>
                                     type="button"
                                     className="btn btn-primary"
                                     onClick={handleCreateAccount}
-                                    disabled={loading || !customerId}
+                                    disabled={loading || !customerPublicId}
                                 >
                                     {loading ? 'Creating...' : 'Create Account'}
                                 </button>
@@ -531,10 +531,10 @@ const Dashboard = () => {
     }
 
     const handleViewStatements = () => {
-        if (customer?.id) {
+        if (customer?.publicId) {
             const year = new Date().getFullYear()
             const month = new Date().getMonth() + 1
-            window.location.href = `/statement?customerId=${customer.id}&year=${year}&month=${month}`
+            window.location.href = `/statement?customerId=${customer.publicId}&year=${year}&month=${month}`
         } else {
             alert('Customer information not available')
         }
@@ -564,10 +564,10 @@ const Dashboard = () => {
 
     const totalBalance = accounts.reduce((sum, acc) => sum + (acc.balance || 0), 0)
     const activeAccounts = accounts.filter(acc => acc.status === 'ACTIVE').length
-    const customerId = user?.id ||(accounts.length > 0 ? accounts[0].customerId : null)
+    const customerId = customer.publicId
     console.log('Render - -User IDL ', user?.id);
     console.log('Render - Accounts:', accounts);
-    console.log('Render - Final customerId:', customerId);
+    console.log('Render - Final customerId:', customer.publicId);
 
 
     return (
@@ -812,7 +812,7 @@ const Dashboard = () => {
                 show={showAccountModal}
                 onHide={() => setShowAccountModal(false)}
                 onAccountCreated={handleAccountCreated}
-                customerId={customerId}
+                customerPublicId={customer?.publicId}
             />
 
             <MoneyTransferModal

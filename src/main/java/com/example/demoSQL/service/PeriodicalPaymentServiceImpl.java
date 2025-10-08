@@ -8,7 +8,6 @@ import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentUpdateDTO;
 import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.PeriodicalPayment;
 import com.example.demoSQL.enums.ReturnMessage;
-import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.repository.AccountRepository;
 import com.example.demoSQL.repository.PeriodicalPaymentRepository;
 import com.example.demoSQL.specification.PeriodicalPaymentSpecification;
@@ -25,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -38,10 +38,10 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
 
     @Override
-    @CachePut(value = "payment", key = "periodicallyPaymentDTO.accountId")
+    @CachePut(value = "payment", key = "periodicallyPaymentDTO.accountNumber")
     public ApiResponse<Object> createPeriodicalPayment(PeriodicallyPaymentDTO periodicallyPaymentDTO) {
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(periodicallyPaymentDTO.getAccountId());
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(periodicallyPaymentDTO.getAccountNumber());
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
@@ -61,10 +61,10 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
     }
 
     @Override
-    @CachePut(value = "payment", key = "#id")
-    public ApiResponse<Object> updatePeriodicalPayment(Long id, PeriodicallyPaymentUpdateDTO periodicallyPaymentUpdateDTO){
+    @CachePut(value = "payment", key = "#publicId")
+    public ApiResponse<Object> updatePeriodicalPayment(UUID publicId, PeriodicallyPaymentUpdateDTO periodicallyPaymentUpdateDTO){
         try{
-            Optional<PeriodicalPayment> optionalPeriodicallyPayment = periodicalPaymentRepository.findById(id);
+            Optional<PeriodicalPayment> optionalPeriodicallyPayment = periodicalPaymentRepository.findByPublicId(publicId);
             if(optionalPeriodicallyPayment.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
@@ -84,10 +84,10 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "payment", key = "#id")
-    public ApiResponse<Object> getPeriodicalPaymentById(Long id) {
+    @Cacheable(value = "payment", key = "#publicId")
+    public ApiResponse<Object> getPeriodicalPaymentById(UUID publicId) {
         try {
-            Optional<PeriodicalPayment> optionalPeriodicallyPayment = periodicalPaymentRepository.findById(id);
+            Optional<PeriodicalPayment> optionalPeriodicallyPayment = periodicalPaymentRepository.findByPublicId(publicId);
             if(optionalPeriodicallyPayment.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
@@ -101,13 +101,13 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> getPeriodicalPaymentByAccountId(Long id, Pageable pageable){
+    public ApiResponse<Object> getPeriodicalPaymentByAccountNumber(String accountNumber, Pageable pageable){
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(id);
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-            Page<PeriodicalPayment> periodicallyPayment = periodicalPaymentRepository.findByAccountId(id, pageable);
+            Page<PeriodicalPayment> periodicallyPayment = periodicalPaymentRepository.findByAccountNumber(accountNumber, pageable);
             return new ApiResponse<>(periodicallyPayment.map(this::toPeriodicallyPaymentDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -116,18 +116,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> getByAccountIdAndStatus(Long accountId, SubscriptionStatus status, Pageable pageable) {
-        try {
-            Page<PeriodicalPayment> periodicallyPayment = periodicalPaymentRepository.findByAccountIdAndStatus(accountId, status, pageable);
-            return new ApiResponse<>(periodicallyPayment.map(this::toPeriodicallyPaymentDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> searchPeriodicalPayment(PeriodicalPaymentSearchDTO dto, Pageable pageable) {
+    public ApiResponse<Object> search(PeriodicalPaymentSearchDTO dto, Pageable pageable) {
         try{
 
             if(dto == null) {
@@ -158,7 +147,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> selfSearchPeriodicalPayment(Long id, PeriodicalPaymentUserSearchDTO dto, Pageable pageable) {
+    public ApiResponse<Object> selfSearch(String accountNumber, PeriodicalPaymentUserSearchDTO dto, Pageable pageable) {
         try{
             if(dto == null) {
                 return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
@@ -170,14 +159,14 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
                 return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
             }
 
-            Optional<Account> optionalAccount = accountRepository.findById(id);
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-
+            Account account = optionalAccount.get();
             Specification<PeriodicalPayment> spec = (root, query, builder) -> builder.conjunction(); // base
 
-            spec = spec.and(PeriodicalPaymentSpecification.hasAccount(id));
+            spec = spec.and(PeriodicalPaymentSpecification.hasAccount(account.getId()));
             spec = spec.and(PeriodicalPaymentSpecification.hasPeriod(dto.getPeriod()));
             spec = spec.and(PeriodicalPaymentSpecification.hasStatus(dto.getStatus()));
             spec = spec.and(PeriodicalPaymentSpecification.hasMinAmount(dto.getMinAmount()));
@@ -212,7 +201,7 @@ public class PeriodicalPaymentServiceImpl implements PeriodicalPaymentService {
 
     private PeriodicallyPaymentDTO toPeriodicallyPaymentDTO(PeriodicalPayment periodicalPayment) {
         return PeriodicallyPaymentDTO.builder()
-                .accountId(periodicalPayment.getAccount().getId())
+                .accountNumber(periodicalPayment.getAccount().getAccountNumber())
                 .description(periodicalPayment.getDescription())
                 .amount(periodicalPayment.getAmount())
                 .period(periodicalPayment.getPeriod())

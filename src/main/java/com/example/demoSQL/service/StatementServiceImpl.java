@@ -39,25 +39,27 @@ public class StatementServiceImpl implements StatementService {
     public final CustomerRepository customerRepository;
 
     @Override
-    public ApiResponse<Object> getMonthlyStatement(Long customerId, int year, int month, Pageable pageable) {
+    public ApiResponse<Object> getMonthlyStatement(UUID customerPublicId, int year, int month, Pageable pageable) {
         try{
 
             LocalDateTime from = LocalDateTime.of(year, month, 1, 0, 0);
             LocalDateTime to = from.plusMonths(1).minusNanos(1);
-            Optional<Customer> optionalCustomer = customerRepository.findById(customerId);
+            Optional<Customer> optionalCustomer = customerRepository.findByPublicId(customerPublicId);
             if(optionalCustomer.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
             Customer customer = optionalCustomer.get();
 
             Specification<Account> cusSpec = (root, query, builder) -> builder.conjunction();
-            cusSpec = cusSpec.and(AccountSpecification.hasCustomer(customerId));
+            cusSpec = cusSpec.and(AccountSpecification.hasCustomer(customer.getId()));
 
 
             List<Account> accounts = accountRepository.findAll(cusSpec);
 
             List<AccountResponseDTO> accountResponseDTOS = accounts.stream()
                     .map(this::toAccountResponseDTO).toList();
+            List<TransactionResponseDTO> transactions = transactionRepository.findTransactionByCustomerPublicId(customerPublicId, pageable).stream().
+                    map(this::toTransactionResponseDTO).toList();
 
             BigDecimal totalOpeningBalance = BigDecimal.ZERO;
             BigDecimal totalClosingBalance = BigDecimal.ZERO;
@@ -74,8 +76,8 @@ public class StatementServiceImpl implements StatementService {
                 spec = spec.and(TransactionSpecification.occurredBefore(to));
                 spec = spec.and(TransactionSpecification.occurredAfter(from));
 
-                List<Transaction> transactions = transactionRepository.findAll(spec);
-                for (Transaction transaction : transactions) {
+                List<Transaction> transactionsOfAccounts = transactionRepository.findAll(spec);
+                for (Transaction transaction : transactionsOfAccounts) {
                     if(transaction.getType().equals(TransactionType.DEPOSIT)
                             || (transaction.getType().equals(TransactionType.TRANSFER) && transaction.getReceiver().getId().equals((account.getId())))){
                         totalCredit = totalCredit.add(transaction.getAmount());
@@ -94,6 +96,8 @@ public class StatementServiceImpl implements StatementService {
                     .totalCredits(totalCredit)
                     .totalDebits(totalDebit)
                     .month(month)
+                    .accounts(accountResponseDTOS)
+                    .transactions(transactions)
                     .year(year).build();
             return new ApiResponse<>(dto, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
 
@@ -139,6 +143,16 @@ public class StatementServiceImpl implements StatementService {
                 .accountLimit(account.getAccountLimit())
                 .openingDate(account.getOpeningDate())
                 .customerName(account.getCustomer().getFirstName() + " " + account.getCustomer().getLastName()).build();
+    }
+    private TransactionResponseDTO toTransactionResponseDTO(Transaction transaction){
+        return TransactionResponseDTO.builder()
+                .accountNumber(transaction.getAccount().getAccountNumber())
+                .receiverNumber(transaction.getReceiver() == null ? null : transaction.getReceiver().getAccountNumber())
+                .amount(transaction.getAmount())
+                .type(transaction.getType())
+                .timestamp(transaction.getCreatedAt())
+                .location(transaction.getLocation())
+                .build();
     }
 
 }

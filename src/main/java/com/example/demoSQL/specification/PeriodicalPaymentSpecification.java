@@ -1,5 +1,6 @@
 package com.example.demoSQL.specification;
 
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.PeriodicalPayment;
 import com.example.demoSQL.enums.Period;
 import com.example.demoSQL.enums.SubscriptionStatus;
@@ -7,9 +8,14 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class PeriodicalPaymentSpecification {
 
+    public static Specification<Account> hasPublicId(UUID publicId) {
+        return(root, query, builder) ->
+                publicId == null ? builder.conjunction() : builder.equal(root.get("publicId"), publicId);
+    }
     public static Specification<PeriodicalPayment> hasAccount(Long accountId) {
         return ((root, query, builder) ->
                 builder.equal(root.get("account"), accountId));

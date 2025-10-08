@@ -7,10 +7,11 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class AlertSearchDTO {
-    private Long TransactionId;
+    private UUID transactionPublicId;
     private AlertType type;
     private AlertStatus status;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)

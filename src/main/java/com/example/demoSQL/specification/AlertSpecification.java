@@ -1,11 +1,13 @@
 package com.example.demoSQL.specification;
 
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Alert;
 import com.example.demoSQL.enums.AlertStatus;
 import com.example.demoSQL.enums.AlertType;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class AlertSpecification {
 
@@ -13,6 +15,12 @@ public class AlertSpecification {
         return ((root, query, builder) ->
                 builder.equal(root.get("transaction"), transactionId));
     }
+
+    public static Specification<Account> hasPublicId(UUID publicId) {
+        return(root, query, builder) ->
+                publicId == null ? builder.conjunction() : builder.equal(root.get("publicId"), publicId);
+    }
+
     public static Specification<Alert> hasType(AlertType type) {
         return((root, query, builder) ->
                 builder.equal(root.get("type"), type));

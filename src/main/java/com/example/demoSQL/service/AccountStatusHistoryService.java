@@ -11,12 +11,13 @@ import org.springframework.data.domain.Pageable;
 
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public interface AccountStatusHistoryService {
 
-    ApiResponse<Object> findByAccountId(Long accountId, Pageable pageable);
-    ApiResponse<Object> findBetweenByAccount(Long id, LocalDateTime start, LocalDateTime end, Pageable pageable);
+    ApiResponse<Object> findByAccountNumber(String accountNumber, Pageable pageable);
+    ApiResponse<Object> findBetweenByAccount(String accountNumber, LocalDateTime start, LocalDateTime end, Pageable pageable);
     ApiResponse<Object> search(AccountStatusHistorySearchDTO accountStatusHistorySearchDTO, Pageable pageable);
-    ApiResponse<Object> selfSearch(Long id, AccountStatusHistoryUserSearchDTO accountStatusHistoryUserSearchDTO, Pageable pageable);
+    ApiResponse<Object> selfSearch(String accountNumber, AccountStatusHistoryUserSearchDTO accountStatusHistoryUserSearchDTO, Pageable pageable);
 
 }

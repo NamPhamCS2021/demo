@@ -8,6 +8,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 public class PeriodicallyPaymentDTO {
     @NotNull(message = "Account ID cannot be null")
-    private Long accountId;
+    private String accountNumber;
     @PositiveOrZero(message = "Amount cannot be negative")
     private BigDecimal amount;
     private String description;

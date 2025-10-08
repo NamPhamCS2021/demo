@@ -5,6 +5,7 @@ import com.example.demoSQL.enums.AccountStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public class AccountSpecification {
 
@@ -16,6 +17,16 @@ public class AccountSpecification {
     public static Specification<Account> hasCustomer(Long id) {
         return (root, query, builder) ->
                 id == null ? builder.conjunction() : builder.equal(root.get("customer").get("id"), id);
+    }
+
+    public static Specification<Account> hasPublicId(UUID publicId) {
+        return(root, query, builder) ->
+                publicId == null ? builder.conjunction() : builder.equal(root.get("publicId"), publicId);
+    }
+
+    public static Specification<Account> hasAccountNumber(String accountNumber) {
+        return (root, query, builder) ->
+                accountNumber == null ? builder.conjunction() : builder.equal(root.get("accountNumber"), accountNumber);
     }
 
     public static Specification<Account> hasMaxBalance(BigDecimal balance) {

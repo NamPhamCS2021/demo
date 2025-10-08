@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component("authSecurity")
 @RequiredArgsConstructor
 public class AuthSecurity {
@@ -31,11 +33,11 @@ public class AuthSecurity {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 
-    public boolean isSelfCustomer(Long customerId) {
+    public boolean isSelfCustomer(UUID customerPublicId) {
         if(isAdmin()) {
             return true;
         }
-        return customerRepository.findById(customerId)
+        return customerRepository.findByPublicId(customerPublicId)
                 .map(c -> c.getEmail().equals(getCurrentEmail()))
                 .orElse(false);
     }
@@ -73,20 +75,20 @@ public class AuthSecurity {
 
 
 
-    public boolean isOwnerOfPayment(Long paymentId) {
+    public boolean isOwnerOfPayment(UUID paymentPublicId) {
         if(isAdmin()) {
             return true;
         }
-        return periodicalPaymentRepository.findById(paymentId)
+        return periodicalPaymentRepository.findByPublicId(paymentPublicId)
                 .map(p -> p.getAccount().getCustomer().getEmail().equals(getCurrentEmail()))
                 .orElse(false);
     }
 
-    public boolean isOwnerOfTransaction(Long transactionId) {
+    public boolean isOwnerOfTransaction(UUID transactionPublicId) {
         if(isAdmin()) {
             return true;
         }
-        return transactionRepository.findById(transactionId)
+        return transactionRepository.findByPublicId(transactionPublicId)
                 .map(t -> {
                     String currentEmail = getCurrentEmail();
                     String senderMail = t.getAccount().getCustomer().getEmail();
@@ -95,20 +97,20 @@ public class AuthSecurity {
                 })
                 .orElse(false);
     }
-    public boolean isOwnerOfAccountStatusHistory(Long userId) {
+    public boolean isOwnerOfAccountStatusHistory(UUID publicId) {
         if(isAdmin()) {
             return true;
         }
-        return accountStatusHistoryRepository.findById(userId)
+        return accountStatusHistoryRepository.findByPublicId(publicId)
                 .map(a -> a.getAccount().getCustomer().getEmail().equals(getCurrentEmail()))
                 .orElse(false);
     }
 
-    public boolean isOwnerOfAlert(Long userId) {
+    public boolean isOwnerOfAlert(UUID publicId) {
         if(isAdmin()) {
             return true;
         }
-        return alertRepository.findById(userId)
+        return alertRepository.findByPublicId(publicId)
                 .map(alert -> alert.getTransaction().getAccount().getCustomer().getEmail().equals(getCurrentEmail()))
                 .orElse(false);
     }

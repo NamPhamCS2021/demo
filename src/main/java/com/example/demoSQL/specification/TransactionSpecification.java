@@ -1,14 +1,20 @@
 package com.example.demoSQL.specification;
 
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.TransactionType;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class TransactionSpecification {
 
+    public static Specification<Account> hasPublicId(UUID publicId) {
+        return(root, query, builder) ->
+                publicId == null ? builder.conjunction() : builder.equal(root.get("publicId"), publicId);
+    }
     public static Specification<Transaction> hasType(TransactionType type) {
         return (root, query, builder) ->
                 type == null ? null : builder.equal(root.get("type"), type);

@@ -7,6 +7,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -14,6 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CustomerResponseDTO {
+    private UUID publicId;
     private String firstName;
     private String lastName;
     private String email;

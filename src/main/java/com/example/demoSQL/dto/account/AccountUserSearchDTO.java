@@ -6,10 +6,12 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class AccountUserSearchDTO {
 
+    private UUID customerPublicId;
     private AccountStatus status;
 
     private BigDecimal maxBalance;

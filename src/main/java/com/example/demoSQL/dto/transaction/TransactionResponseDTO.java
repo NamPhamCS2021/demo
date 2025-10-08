@@ -5,14 +5,16 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class TransactionResponseDTO {
-    private  Long customerId;
-    private  Long receiverId;
+    private String accountNumber;
+    private String receiverNumber;
     private BigDecimal amount;
     private TransactionType type;
     private LocalDateTime timestamp;

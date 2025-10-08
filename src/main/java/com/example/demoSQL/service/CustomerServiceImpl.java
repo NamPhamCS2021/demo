@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -71,9 +72,9 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @CachePut(value = "customers")
-    public ApiResponse<Object> updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO){
+    public ApiResponse<Object> updateCustomer(UUID publicId, CustomerUpdateDTO customerUpdateDTO){
         try{
-            Optional<Customer> optionalCustomer = customerRepository.findById(id);
+            Optional<Customer> optionalCustomer = customerRepository.findByPublicId(publicId);
 
             if(optionalCustomer.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
@@ -114,10 +115,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "customers", key = "#id")
-    public ApiResponse<Object> getCustomerById(Long id){
+    @Cacheable(value = "customers", key = "#publicId")
+    public ApiResponse<Object> getCustomerByPublicId(UUID publicId){
         try{
-            Optional<Customer> optionalCustomer = customerRepository.findById(id);
+            Optional<Customer> optionalCustomer = customerRepository.findByPublicId(publicId);
             if(optionalCustomer.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
@@ -129,7 +130,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public ApiResponse<Object> searchCustomers(CustomerSearchDTO dto, Pageable pageable) {
+    public ApiResponse<Object> search(CustomerSearchDTO dto, Pageable pageable) {
         try{
 
             if(dto == null) {
@@ -169,6 +170,7 @@ public class CustomerServiceImpl implements CustomerService {
     //helper
     private CustomerResponseDTO toCustomerResponse(Customer customer){
         return CustomerResponseDTO.builder()
+                .publicId(customer.getPublicId())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
                 .email(customer.getEmail())

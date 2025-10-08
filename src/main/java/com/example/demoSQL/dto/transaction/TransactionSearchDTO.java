@@ -6,12 +6,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class TransactionSearchDTO {
     private TransactionType type;
-    private Long accountId;
-    private Long receiverId;
+    private String accountNumber;
+    private String receiverNumber;
 
     private BigDecimal minAmount;
     private BigDecimal maxAmount;

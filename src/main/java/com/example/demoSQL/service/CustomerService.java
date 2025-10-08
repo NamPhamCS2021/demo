@@ -2,18 +2,18 @@ package com.example.demoSQL.service;
 
 import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.customer.*;
-import com.example.demoSQL.entity.Customer;
-import com.example.demoSQL.enums.CustomerType;
-import org.springframework.data.domain.Page;
+
 import org.springframework.data.domain.Pageable;
+
+import java.util.UUID;
 
 public interface CustomerService {
 
     ApiResponse<Object> getCustomerByEmail(String email);
     ApiResponse<Object> createCustomer(CustomerCreateDTO customerCreateDTO);
-    ApiResponse<Object> updateCustomer(Long id, CustomerUpdateDTO customerUpdateDTO);
+    ApiResponse<Object> updateCustomer(UUID publicId, CustomerUpdateDTO customerUpdateDTO);
     ApiResponse<Object> getAll(Pageable pageable);
-    ApiResponse<Object> getCustomerById(Long id);
-    ApiResponse<Object> searchCustomers(CustomerSearchDTO dto, Pageable pageable);
+    ApiResponse<Object> getCustomerByPublicId(UUID publicId);
+    ApiResponse<Object> search(CustomerSearchDTO dto, Pageable pageable);
 
 }

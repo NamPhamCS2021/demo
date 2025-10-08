@@ -66,7 +66,7 @@ public class SecurityConfig {
             .exceptionHandling(exceptionHandler ->exceptionHandler.authenticationEntryPoint(unauthorizedHandler))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/api/login").permitAll()
+                    .requestMatchers("/api/auth/login").permitAll()
                     .requestMatchers("swagger-config/**").permitAll()
                     .requestMatchers("swagger-ui/**").permitAll()
                     .requestMatchers("v3/api-docs/**").permitAll()
@@ -74,9 +74,9 @@ public class SecurityConfig {
                     .requestMatchers("swagger-resources/**").permitAll()
                     .requestMatchers("webjars/**").permitAll()
                     .requestMatchers("/error").permitAll()
-                    .requestMatchers("/api/data").permitAll()
-                    .requestMatchers("/api/aLogin").permitAll()
-                    .requestMatchers("/api/aSignup").permitAll()
+                    .requestMatchers("/api/data/**").permitAll()
+                    .requestMatchers("/api/auth/aLogin").permitAll()
+                    .requestMatchers("/api/auth/aSignup").permitAll()
                     .requestMatchers(
                             "/css/**",
                             "/js/**",
@@ -87,14 +87,22 @@ public class SecurityConfig {
                             "/react/**",        // if you serve react.development.js under /react/
                             "/babel/**"         // if you serve babel.min.js under /babel/
                     ).permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/customers").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/customers").authenticated()
-                    .requestMatchers("/api/customers/{id}").authenticated()
-                    .requestMatchers("/api/accounts/status/**").authenticated()
-                    .requestMatchers("/api/transactions/**").authenticated()
-                    .requestMatchers("/api/accountstatushistory/**").authenticated()
-                    .requestMatchers("/api/payments/**").authenticated()
-                    .anyRequest().permitAll());
+                    .requestMatchers(HttpMethod.POST, "/api/customers").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/customers").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.PUT, "/api/customers/{id}").hasRole("ADMIN")
+                    .requestMatchers("/api/customers/search").hasRole("ADMIN")
+                    .requestMatchers("/api/customers/**").authenticated()
+                    .requestMatchers("/api/accounts/search").hasRole("ADMIN")
+                    .requestMatchers("/api/accounts/status/{accountNumber}").hasRole("ADMIN")
+                    .requestMatchers("/api/accounts/accountLimit/{accountNumber}").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/accounts").hasRole("ADMIN")
+                    .requestMatchers("/api/transactions/search").hasRole("ADMIN")
+                    .requestMatchers("/api/accountStatusHistory/search").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/alerts").hasRole("ADMIN")
+                    .requestMatchers("/api/alerts/search").hasRole("ADMIN")
+                    .requestMatchers("/api/payments/search").hasRole("ADMIN")
+                    .requestMatchers("/api/report/**").hasRole("ADMIN")
+                    .anyRequest().authenticated());
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

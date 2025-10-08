@@ -44,6 +44,9 @@ export const apiService = {
         return fetchWithAuth("/api/customers/profile");
     },
 
+    async getCustomer(customerId) {
+        return fetchWithAuth(`/api/customers/${customerId}`);
+    },
     // Accounts
     async getAccounts() {
         return fetchWithAuth("/api/accounts/me");

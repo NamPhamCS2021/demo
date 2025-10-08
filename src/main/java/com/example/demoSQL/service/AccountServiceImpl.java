@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -46,10 +47,14 @@ public class AccountServiceImpl implements AccountService {
 
 
     @Override
-    @CachePut(value = "accounts", key = "#accountCreateDTO.customerId")
+    @CachePut(value = "accounts", key = "#accountCreateDTO.customerPublicId")
     public ApiResponse<Object> createAccount(AccountCreateDTO accountCreateDTO) {
         try{
-            Customer customer = customerRepository.findById(accountCreateDTO.getCustomerId()).orElseThrow(() -> new EntityNotFoundException("Customer with id " + accountCreateDTO.getCustomerId() + " not found"));
+            Optional<Customer> optionalCustomer = customerRepository.findByPublicId(accountCreateDTO.getCustomerPublicId());
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalCustomer.get();
             Account account = new Account();
             account.setCustomer(customer);
             if(customer.getType() == CustomerType.TEMPORARY || customer.getType() == CustomerType.PERSONAL){
@@ -67,10 +72,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @CachePut(value = "accounts", key = "#id")
-    public ApiResponse<Object> updateAccountStatus(Long id, AccountUpdateStatusDTO accountUpdate) {
+    @CachePut(value = "accounts", key = "#accountNumber")
+    public ApiResponse<Object> updateAccountStatus(String accountNumber, AccountUpdateStatusDTO accountUpdate) {
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(id);
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
 
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
@@ -95,10 +100,10 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    @CachePut(value = "accounts", key = "#id")
-    public ApiResponse<Object> updateAccountLimit(Long id, AccountUpdateLimitDTO accountUpdate) {
+    @CachePut(value = "accounts", key = "#accountNumber")
+    public ApiResponse<Object> updateAccountLimit(String accountNumber, AccountUpdateLimitDTO accountUpdate) {
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(id);
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(accountNumber);
 
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
@@ -138,29 +143,14 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> getAccountByCustomerId(Long id, Pageable pageable) {
+    public ApiResponse<Object> getAccountByCustomerId(UUID id, Pageable pageable) {
         try{
-            Optional<Customer> optionalCustomer = customerRepository.findById(id);
+            Optional<Customer> optionalCustomer = customerRepository.findByPublicId(id);
 
             if(optionalCustomer.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
-            Page<Account> accountPage = accountRepository.findByCustomerId(id, pageable);
-            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-    }
-
-    @Override
-    @Transactional
-    public ApiResponse<Object> getAccountsByCustomerIdAndStatus(Long id, AccountStatus status, Pageable pageable) {
-        try{
-            Optional<Customer> optionalCustomer = customerRepository.findById(id);
-            if(optionalCustomer.isEmpty()){
-                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
-            }
-            Page<Account> accountPage = accountRepository.findByCustomerIdAndStatus(id, status, pageable);
+            Page<Account> accountPage = accountRepository.findByCustomerPublicId(id, pageable);
             return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
         } catch (Exception e) {
             return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
@@ -180,20 +170,11 @@ public class AccountServiceImpl implements AccountService {
     }
 
 
-    @Override
-    @Transactional(readOnly = true)
-    public ApiResponse<Object> getAccountsByStatus(AccountStatus status, Pageable pageable) {
-        try{
-            Page<Account> accountPage = accountRepository.findByStatus(status, pageable);
-            return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
-        } catch (Exception e) {
-            return new ApiResponse<>(e.getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
-        }
-    }
+
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> searchAccounts(AccountSearchDTO dto, Pageable pageable) {
+    public ApiResponse<Object> search(AccountSearchDTO dto, Pageable pageable) {
         try{
 
             if(dto == null) {
@@ -205,10 +186,15 @@ public class AccountServiceImpl implements AccountService {
             {
                 return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
             }
+            Optional<Customer> optionalCustomer = customerRepository.findByPublicId(dto.getCustomerPublicId());
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalCustomer.get();
 
             Specification<Account> spec = (root, query, builder) -> builder.conjunction(); // base
 
-            spec = spec.and(AccountSpecification.hasCustomer(dto.getCustomerId()));
+            spec = spec.and(AccountSpecification.hasCustomer(customer.getId()));
             spec = spec.and(AccountSpecification.hasStatus(dto.getStatus()));
             spec = spec.and(AccountSpecification.hasMaxLimit(dto.getMaxLimit()));
             spec = spec.and(AccountSpecification.hasMinLimit(dto.getMinLimit()));
@@ -226,7 +212,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> searchSelfAccounts(Long id, AccountUserSearchDTO dto, Pageable pageable) {
+    public ApiResponse<Object> selfSearch(UUID customerPublicId, AccountUserSearchDTO dto, Pageable pageable) {
         try {
             if(dto == null) {
                 return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
@@ -237,13 +223,19 @@ public class AccountServiceImpl implements AccountService {
             {
                 return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
             }
+
+            Optional<Customer> optionalAccount = customerRepository.findByPublicId(customerPublicId);
+            if(optionalAccount.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalAccount.get();
             log.info("Search DTO - status: {}, minBalance: {}, maxBalance: {}, minLimit: {}, maxLimit: {}, from: {}, to: {}",
                     dto.getStatus(), dto.getMinBalance(), dto.getMaxBalance(),
                     dto.getMinLimit(), dto.getMaxLimit(), dto.getFrom(), dto.getTo());
 
             Specification<Account> spec = (root, query, builder) -> builder.conjunction(); // base
 
-            spec = spec.and(AccountSpecification.hasCustomer(id));
+            spec = spec.and(AccountSpecification.hasCustomer(customer.getId()));
             spec = spec.and(AccountSpecification.hasStatus(dto.getStatus()));
             spec = spec.and(AccountSpecification.hasMaxLimit(dto.getMaxLimit()));
             spec = spec.and(AccountSpecification.hasMinLimit(dto.getMinLimit()));
@@ -312,7 +304,7 @@ public class AccountServiceImpl implements AccountService {
             return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
         }
         Customer customer = optionalCustomer.get();
-        Page<Account> accountPage = accountRepository.findByCustomerId(customer.getId(), pageable);
+        Page<Account> accountPage = accountRepository.findByCustomerPublicId(customer.getPublicId(), pageable);
         return new ApiResponse<>(accountPage.map(this::toAccountResponseDTO), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
     }
 

@@ -1,16 +1,23 @@
 package com.example.demoSQL.specification;
 
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.enums.AccountStatus;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class AccountStatusHistorySpecification {
 
     public static Specification<AccountStatusHistory> hasAccount(Long id) {
         return ((root, query, builder) ->
-                builder.equal(root.get("accountStatusHistory"), id));
+                builder.equal(root.get("account"), id));
+    }
+
+    public static Specification<Account> hasPublicId(UUID publicId) {
+        return(root, query, builder) ->
+                publicId == null ? builder.conjunction() : builder.equal(root.get("publicId"), publicId);
     }
 
     public static Specification<AccountStatusHistory> hasStatus(AccountStatus status) {

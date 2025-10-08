@@ -53,8 +53,7 @@ public class AuthController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ApiResponse<Object> getCurrentUser(Authentication auth) {
-        ApiResponse<Object> user = userService.findByUsername(auth.getName());
-        return user;
+        return authService.getCurrentUser(auth);
     }
 
     @GetMapping("/check")

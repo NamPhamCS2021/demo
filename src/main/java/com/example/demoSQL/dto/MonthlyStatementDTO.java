@@ -26,4 +26,5 @@ public class MonthlyStatementDTO {
     private BigDecimal totalDebits;   // withdrawals + transfers out
 
     private List<AccountResponseDTO> accounts;
+    private List<TransactionResponseDTO> transactions;
 }

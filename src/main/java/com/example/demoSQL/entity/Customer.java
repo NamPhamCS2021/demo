@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "customer")
@@ -25,6 +26,9 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
 
     @Column(nullable = false)
     private String firstName;
@@ -57,5 +61,6 @@ public class Customer {
     @PrePersist
     public void initialiseCustomer() {
         this.createdDate = LocalDateTime.now();
+        this.publicId = UUID.randomUUID();
     }
 }

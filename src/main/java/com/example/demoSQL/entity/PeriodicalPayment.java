@@ -11,6 +11,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -23,6 +24,9 @@ public class PeriodicalPayment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
 
     @Column
     private String description;
@@ -50,7 +54,7 @@ public class PeriodicalPayment {
     public void initialisePeriodicallyPayment() {
         this.status = SubscriptionStatus.ACTIVE;
         this.startedAt = LocalDateTime.now();
-
+        this.publicId = UUID.randomUUID();
         switch(this.period) {
             case WEEKLY -> this.endedAt = this.startedAt.plusWeeks(1);
             case MONTHLY -> this.endedAt = this.startedAt.plusMonths(1);

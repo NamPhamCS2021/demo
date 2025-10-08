@@ -1,5 +1,6 @@
 package com.example.demoSQL.repository;
 
+import com.example.demoSQL.entity.AccountStatusHistory;
 import com.example.demoSQL.projections.LocationCount;
 import com.example.demoSQL.entity.Transaction;
 import com.example.demoSQL.enums.TransactionType;
@@ -14,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 
@@ -27,7 +30,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     List<LocationCount> countTransactionsByLocation();
     @Query("SELECT t FROM Transaction t WHERE t.checked = false")
     List<Transaction> findByCheckedFalse();
-
+    @Query("SELECT t from Transaction t WHERE t.publicId = :publicId")
+    Optional<Transaction> findByPublicId(@Param("publicId") UUID publicId);
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.createdAt BETWEEN :start AND :end")
     BigDecimal getTotalTransactionAmountBetween(LocalDateTime start, LocalDateTime end);
 
@@ -78,4 +82,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     @Query("SELECT t FROM Transaction t WHERE (t.account.id = :accountId OR t.receiver.id = :accountId) AND (t.createdAt BETWEEN :start AND :end)")
     List<Transaction> findBetweenTimeByAccountIdAndType(@Param("accountId") Long accountId, LocalDateTime start, LocalDateTime end, TransactionType type);
+
+    @Query("SELECT t FROM Transaction t WHERE (t.account.customer.publicId = :customerPublicId)")
+    Page<Transaction> findTransactionByCustomerPublicId(@Param("customerPublicId") UUID customerPublicId, Pageable pageable);
 }

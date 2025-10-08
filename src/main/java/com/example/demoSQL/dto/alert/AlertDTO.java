@@ -5,6 +5,7 @@ import com.example.demoSQL.enums.AlertType;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -12,8 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class AlertDTO {
-    private Long accountId;
-    private Long transactionId;
+    private String accountNumber;
+    private UUID transactionPublicId;
     private String description;
     private AlertType type;
     private AlertStatus status;

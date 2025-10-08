@@ -11,6 +11,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "transaction")
@@ -23,6 +24,9 @@ public class Transaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
@@ -53,8 +57,9 @@ public class Transaction {
 
     @PrePersist
     public void initialiseTransaction() {
-
         this.checked = false;
         this.createdAt = LocalDateTime.now();
+        this.publicId = UUID.randomUUID();
+
     }
 }

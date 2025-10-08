@@ -81,7 +81,7 @@ const UserDropdown = ({ user, onLogout }) => {
                                 className="dropdown-item py-2 border-0 bg-transparent w-100 text-start"
                                 onClick={() => {
                                     const urlParams = new URLSearchParams(window.location.search)
-                                    const customerId = user.customerId || user.id || '1' // Fallback
+                                    const customerId = user.customerPublicId
                                     const year = new Date().getFullYear()
                                     const month = new Date().getMonth() + 1
                                     handleNavigation(`/statement?customerId=${customerId}&year=${year}&month=${month}`)

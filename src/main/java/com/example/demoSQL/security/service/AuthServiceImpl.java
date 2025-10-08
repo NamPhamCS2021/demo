@@ -1,8 +1,11 @@
 package com.example.demoSQL.security.service;
 
 import com.example.demoSQL.dto.ApiResponse;
+import com.example.demoSQL.dto.auth.UserInfoResponse;
+import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.ReturnMessage;
 import com.example.demoSQL.enums.UserRole;
+import com.example.demoSQL.repository.CustomerRepository;
 import com.example.demoSQL.security.entity.User;
 import com.example.demoSQL.security.model.AuthRequest;
 import com.example.demoSQL.security.model.AuthResponse;
@@ -12,6 +15,7 @@ import com.example.demoSQL.security.repository.UserRepository;
 import com.example.demoSQL.security.utils.JwtUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,31 +28,23 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    public AuthServiceImpl(UserService userService, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, UserRepository userRepository) {
-        this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-    }
+    private final CustomerRepository customerRepository;
 
     @Override
     public ApiResponse<Object> login(AuthRequest request, HttpServletResponse response) {
@@ -89,5 +85,30 @@ public class AuthServiceImpl implements AuthService {
         userRepository.save(user);
 
         return new ApiResponse<>(response, ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+    }
+    @Override
+    public ApiResponse<Object> getCurrentUser(Authentication authentication) {
+        try{
+            Optional<User> optionalUser = userRepository.findByUsername(authentication.getName());
+            if(optionalUser.isEmpty()){
+                return new ApiResponse<>(null, ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            User user = optionalUser.get();
+
+            Optional<Customer> optionalCustomer = customerRepository.findByEmail(user.getUsername());
+            if(optionalCustomer.isEmpty()){
+                return new ApiResponse<>(null, ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+            Customer customer = optionalCustomer.get();
+
+            return new ApiResponse<>(UserInfoResponse.builder()
+                    .username(customer.getEmail())
+                    .firstName(customer.getFirstName())
+                    .role(user.getRole().name())
+                    .customerPublicId(customer.getPublicId())
+                    .build(), ReturnMessage.SUCCESS.getCode(), ReturnMessage.SUCCESS.getMessage());
+        } catch (Exception e) {
+            return new ApiResponse<>(e. getMessage(), ReturnMessage.FAIL.getCode(), ReturnMessage.FAIL.getMessage());
+        }
     }
 }

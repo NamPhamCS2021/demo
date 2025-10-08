@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "periodical_report")
@@ -20,6 +21,9 @@ public class PeriodicalReport {
     @Id
     @GeneratedValue
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
 
     @Column
     private Long numberOfTransactions;
@@ -48,5 +52,7 @@ public class PeriodicalReport {
    @PrePersist
    private void initialisePeriodicalReport() {
         this.timestamp = LocalDateTime.now();
+        this.publicId = UUID.randomUUID();
+
    }
 }

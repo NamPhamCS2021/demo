@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -20,6 +21,10 @@ public class AccountStatusHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
@@ -31,6 +36,7 @@ public class AccountStatusHistory {
     @PrePersist
     public void initialiseAccountStatusHistory() {
         this.timestamp = LocalDateTime.now();
+        this.publicId = UUID.randomUUID();
     }
 
 }

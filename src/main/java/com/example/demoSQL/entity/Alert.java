@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -21,6 +22,9 @@ public class Alert {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, unique = true, updatable = false)
+    private UUID publicId;
 
     @Column(nullable = true)
     private String description;
@@ -43,5 +47,6 @@ public class Alert {
     public void initialiseAlert(){
         this.timestamp = LocalDateTime.now();
         this.status = AlertStatus.NEW;
+        this.publicId = UUID.randomUUID();
     }
 }

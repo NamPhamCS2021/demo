@@ -45,18 +45,17 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountId")
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountNumber")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountNumber")
     public ApiResponse<Object> deposit(TransactionCreateDTO transactionCreateDTO) {
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(transactionCreateDTO.getAccountNumber());
 
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
             }
 
             Account account = optionalAccount.get();
-
             if(account.getStatus() != AccountStatus.ACTIVE){
                 return new ApiResponse<>(ReturnMessage.INACTIVE.getCode(), ReturnMessage.INACTIVE.getMessage());
             }
@@ -78,11 +77,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountId")
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountNumber")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountNumber")
     public ApiResponse<Object> withdraw(TransactionCreateDTO transactionCreateDTO) {
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(transactionCreateDTO.getAccountNumber());
 
             if(optionalAccount.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
@@ -118,12 +117,12 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountId")
-    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountId")
+    @CachePut(value = "transactionsByAccount", key = "#transactionCreateDTO.accountNumber")
+    @CacheEvict(value = "accounts", key ="#transactionCreateDTO.accountNumber")
     public ApiResponse<Object> transfer(TransactionCreateDTO transactionCreateDTO){
         try{
-            Optional<Account> optionalAccount = accountRepository.findById(transactionCreateDTO.getAccountId());
-            Optional<Account> optionalReceiver = accountRepository.findById(transactionCreateDTO.getReceiverId());
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(transactionCreateDTO.getAccountNumber());
+            Optional<Account> optionalReceiver = accountRepository.findByAccountNumber(transactionCreateDTO.getReceiverNumber());
 
             if(optionalAccount.isEmpty() || optionalReceiver.isEmpty()){
                 return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
@@ -182,7 +181,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> searchTransactions(TransactionSearchDTO dto, Pageable pageable){
+    public ApiResponse<Object> search(TransactionSearchDTO dto, Pageable pageable){
         try{
             if(dto == null) {
                 return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
@@ -191,10 +190,21 @@ public class TransactionServiceImpl implements TransactionService {
             || (dto.getMinAmount() != null && dto.getMaxAmount() != null && dto.getMinAmount().compareTo(dto.getMaxAmount()) > 0)) {
                 return new ApiResponse<>(ReturnMessage.INVALID_ARGUMENTS.getCode(), ReturnMessage.INVALID_ARGUMENTS.getMessage());
             }
+
+            Optional<Account> optionalAccount = accountRepository.findByAccountNumber(dto.getAccountNumber());
+            Optional<Account> optionalReceiver = accountRepository.findByAccountNumber(dto.getReceiverNumber());
+
+            if(optionalAccount.isEmpty() || optionalReceiver.isEmpty()){
+                return new ApiResponse<>(ReturnMessage.NOT_FOUND.getCode(), ReturnMessage.NOT_FOUND.getMessage());
+            }
+
+            Account account = optionalAccount.get();
+            Account receiver = optionalReceiver.get();
+
             Specification<Transaction> spec = (root, query, builder) -> builder.conjunction(); // base
 
-            spec = spec.and(TransactionSpecification.hasAccountId(dto.getAccountId()));
-            spec = spec.and(TransactionSpecification.hasReceiverId(dto.getReceiverId()));
+            spec = spec.and(TransactionSpecification.hasAccountId(account.getId()));
+            spec = spec.and(TransactionSpecification.hasReceiverId(receiver.getId()));
             spec = spec.and(TransactionSpecification.hasType(dto.getType()));
             spec = spec.and(TransactionSpecification.hasMinAmount(dto.getMinAmount()));
             spec = spec.and(TransactionSpecification.hasMaxAmount(dto.getMaxAmount()));
@@ -212,7 +222,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> selfTransactionSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable){
+    public ApiResponse<Object> selfSearch(Long id, TransactionUserSearchDTO dto, Pageable pageable){
         try{
             if(dto == null) {
                 return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
@@ -249,7 +259,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional(readOnly = true)
-    public ApiResponse<Object> selfTransactionSearchByAccountNumber(String accountNumber, TransactionUserSearchDTO dto, Pageable pageable){
+    public ApiResponse<Object> selfSearchByAccountNumber(String accountNumber, TransactionUserSearchDTO dto, Pageable pageable){
         try{
             if(dto == null) {
                 return new ApiResponse<>(ReturnMessage.NULL_VALUE.getCode(), ReturnMessage.NULL_VALUE.getMessage());
@@ -419,8 +429,8 @@ public class TransactionServiceImpl implements TransactionService {
     //helper
     private TransactionResponseDTO toTransactionResponseDTO(Transaction transaction){
         return TransactionResponseDTO.builder()
-                .customerId(transaction.getAccount().getCustomer().getId())
-                .receiverId(transaction.getReceiver() == null ? null : transaction.getReceiver().getId())
+                .accountNumber(transaction.getAccount().getAccountNumber())
+                .receiverNumber(transaction.getReceiver() == null ? null : transaction.getReceiver().getAccountNumber())
                 .amount(transaction.getAmount())
                 .type(transaction.getType())
                 .timestamp(transaction.getCreatedAt())

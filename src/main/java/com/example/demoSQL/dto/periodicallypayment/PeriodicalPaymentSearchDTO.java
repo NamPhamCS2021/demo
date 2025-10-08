@@ -7,9 +7,12 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Data
 public class PeriodicalPaymentSearchDTO {
 
+    private UUID publicId;
     private String description;
     private BigDecimal maxAmount;
     private BigDecimal minAmount;

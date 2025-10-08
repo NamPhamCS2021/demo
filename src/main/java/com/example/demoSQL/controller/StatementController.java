@@ -9,6 +9,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/statements")
 @RequiredArgsConstructor
@@ -18,7 +20,7 @@ public class StatementController {
 
     @GetMapping("/{customerId}")
     @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
-    public ApiResponse<Object> getMonthlyStatements(@PathVariable("customerId") Long customerId, @RequestParam int year, @RequestParam int month,
+    public ApiResponse<Object> getMonthlyStatements(@PathVariable("customerId") UUID customerId, @RequestParam int year, @RequestParam int month,
                                                     @PageableDefault(size = 20) Pageable pageable) {
         return statementService.getMonthlyStatement(customerId, year, month, pageable);
     }

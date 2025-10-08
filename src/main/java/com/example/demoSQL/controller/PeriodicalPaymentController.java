@@ -5,7 +5,6 @@ import com.example.demoSQL.dto.ApiResponse;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicalPaymentSearchDTO;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicalPaymentUserSearchDTO;
 import com.example.demoSQL.dto.periodicallypayment.PeriodicallyPaymentUpdateDTO;
-import com.example.demoSQL.enums.SubscriptionStatus;
 import com.example.demoSQL.service.PeriodicalPaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
@@ -16,11 +15,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @SecurityRequirement(name = "Bearer Authentication")
-@Repository
+@RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
 public class PeriodicalPaymentController {
@@ -29,43 +29,35 @@ public class PeriodicalPaymentController {
 
     @PreAuthorize("@authSecurity.isOwnerOfPayment(#id)")
     @GetMapping("/{id}")
-    public ApiResponse<Object> findById(@PathVariable Long id){
+    public ApiResponse<Object> findById(@PathVariable UUID id){
         return periodicalPaymentService.getPeriodicalPaymentById(id);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
-    @GetMapping("/account/{id}")
-    public ApiResponse<Object> findByAccountId(@PathVariable Long id,
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
+    @GetMapping("/account/{accountNumber}")
+    public ApiResponse<Object> findByAccountNumber(@PathVariable String accountNumber,
                                                @PageableDefault(size = 20, sort = "id", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable){
-        return periodicalPaymentService.getPeriodicalPaymentByAccountId(id, pageable);
+        return periodicalPaymentService.getPeriodicalPaymentByAccountNumber(accountNumber, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
-    @GetMapping("/account/status")
-    public ApiResponse<Object> findByAccountIdAndStatus(@RequestParam Long id,
-                                                        @RequestParam SubscriptionStatus status,
-                                                        @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        return periodicalPaymentService.getByAccountIdAndStatus(id, status, pageable);
-
-    }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/search")
     public ApiResponse<Object> search(@Valid @RequestBody PeriodicalPaymentSearchDTO periodicalPaymentSearchDTO,
                                       @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        return periodicalPaymentService.searchPeriodicalPayment(periodicalPaymentSearchDTO, pageable);
+        return periodicalPaymentService.search(periodicalPaymentSearchDTO, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
-    @PostMapping("/search/{id}")
-    public ApiResponse<Object> searchSelfPeriodicalPayment(@PathVariable Long id, @Valid @RequestBody PeriodicalPaymentUserSearchDTO dto,
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
+    @PostMapping("/search/{accountNumber}")
+    public ApiResponse<Object> selfSearch(@PathVariable String accountNumber, @Valid @RequestBody PeriodicalPaymentUserSearchDTO dto,
                                                            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        return periodicalPaymentService.selfSearchPeriodicalPayment(id, dto, pageable);
+        return periodicalPaymentService.selfSearch(accountNumber, dto, pageable);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/{id}")
-    public ApiResponse<Object> update(@PathVariable Long id, @Valid @RequestBody PeriodicallyPaymentUpdateDTO payment){
+    public ApiResponse<Object> update(@PathVariable UUID id, @Valid @RequestBody PeriodicallyPaymentUpdateDTO payment){
         return periodicalPaymentService.updatePeriodicalPayment(id, payment);
     }
 }

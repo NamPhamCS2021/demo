@@ -20,6 +20,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -273,7 +274,7 @@ class DataPopulationService {
     }
 }
 
-// Optional Controller for easy testing
+// Controller for easy testing
 @RestController
 @RequestMapping("/api/data")
 @RequiredArgsConstructor
@@ -307,10 +308,50 @@ public class DataPopulationController {
     public ResponseEntity<String> createAdminUser() {
         try {
             dataPopulationService.createAdminUser();
-            return ResponseEntity.ok("Admin user created successfully!");
+            return ResponseEntity.ok("Admin user created successfully! Username: admin, Password: admin123");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error creating admin user: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/populate-custom")
+    public ResponseEntity<String> populateCustomData(
+            @RequestParam(defaultValue = "50") int customers,
+            @RequestParam(defaultValue = "200") int transactions,
+            @RequestParam(defaultValue = "30") int payments,
+            @RequestParam(defaultValue = "10") int reports) {
+        try {
+            System.out.println("Starting custom data population...");
+
+            List<Customer> customerList = dataPopulationService.createCustomersWithUsers(customers);
+            System.out.println("Created " + customerList.size() + " customers with users");
+
+            List<Account> accounts = dataPopulationService.createAccountsForCustomers(customerList);
+            System.out.println("Created " + accounts.size() + " accounts");
+
+            List<Transaction> transactionList = dataPopulationService.createTransactions(accounts, transactions);
+            System.out.println("Created " + transactionList.size() + " transactions");
+
+            dataPopulationService.createAlertsForTransactions(transactionList);
+            System.out.println("Created alerts for transactions");
+
+            dataPopulationService.createPeriodicalPayments(accounts, payments);
+            System.out.println("Created " + payments + " periodical payments");
+
+            dataPopulationService.createAccountStatusHistory(accounts);
+            System.out.println("Created account status history");
+
+            dataPopulationService.createPeriodicalReports(reports);
+            System.out.println("Created " + reports + " periodical reports");
+
+            return ResponseEntity.ok(String.format(
+                    "Custom data population completed! Created: %d customers, %d accounts, %d transactions, %d payments, %d reports",
+                    customers, accounts.size(), transactions, payments, reports
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error during custom data population: " + e.getMessage());
         }
     }
 }

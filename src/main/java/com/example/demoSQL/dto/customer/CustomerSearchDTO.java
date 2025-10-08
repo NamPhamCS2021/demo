@@ -5,9 +5,11 @@ import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 public class CustomerSearchDTO {
+    private UUID publicId;
     private String firstName;
     private String lastName;
     private String email;

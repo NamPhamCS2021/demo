@@ -1,11 +1,18 @@
 package com.example.demoSQL.specification;
 
+import com.example.demoSQL.entity.Account;
 import com.example.demoSQL.entity.Customer;
 import com.example.demoSQL.enums.CustomerType;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.util.UUID;
+
 public class CustomerSpecification {
 
+    public static Specification<Account> hasPublicId(UUID publicId) {
+        return(root, query, builder) ->
+                publicId == null ? builder.conjunction() : builder.equal(root.get("publicId"), publicId);
+    }
     public static Specification<Customer> hasFirstName(String firstName) {
         return (root, query, builder) ->
                 firstName == null ? null : builder.like(builder.lower(root.get("firstName")), "%" + firstName.toLowerCase() + "%");

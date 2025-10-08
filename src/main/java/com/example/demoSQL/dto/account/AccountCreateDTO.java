@@ -3,7 +3,7 @@ package com.example.demoSQL.dto.account;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-import java.math.BigDecimal;
+import java.util.UUID;
 
 @Setter
 @Getter
@@ -12,5 +12,5 @@ import java.math.BigDecimal;
 @Builder
 public class AccountCreateDTO {
     @NotNull(message = "Customer ID cannot be null")
-    private Long customerId;
+    private UUID customerPublicId;
 }

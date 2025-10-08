@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 
 @SecurityRequirement(name = "Bearer Authentication")
 @RestController
-@RequestMapping("/api/accountstatushistory")
+@RequestMapping("/api/accountStatusHistory")
 @Validated
 @RequiredArgsConstructor
 public class AccountStatusHistoryController {
@@ -28,20 +28,20 @@ public class AccountStatusHistoryController {
     private final AccountStatusHistoryService accountStatusHistoryService;
 
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
-    @GetMapping("/account/{id}")
-    public ApiResponse<Object> getAccountStatusHistoryById(@PathVariable Long id,
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
+    @GetMapping("/account/{accountNumber}")
+    public ApiResponse<Object> getAccountStatusHistoryById(@PathVariable String accountNumber,
                                                    @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        return accountStatusHistoryService.findByAccountId(id, pageable);
+        return accountStatusHistoryService.findByAccountNumber(accountNumber, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
     @GetMapping("account/between")
-    public ApiResponse<Object> getAccountStatusHistoryByIdAndStatus(@RequestParam Long id,
+    public ApiResponse<Object> getAccountStatusHistoryByIdAndStatus(@RequestParam String accountNumber,
                                                                     @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime start,
                                                                     @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime end,
                                                                     @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        return accountStatusHistoryService.findBetweenByAccount(id, start, end, pageable);
+        return accountStatusHistoryService.findBetweenByAccount(accountNumber, start, end, pageable);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
@@ -51,11 +51,11 @@ public class AccountStatusHistoryController {
         return accountStatusHistoryService.search(dto, pageable);
     }
 
-    @PreAuthorize("@authSecurity.isOwnerOfAccount(#id)")
-    @PostMapping("/search/{id}")
-    public ApiResponse<Object> selfSearch(@PathVariable Long id, @Valid @RequestBody AccountStatusHistoryUserSearchDTO dto,
+    @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")
+    @PostMapping("/search/{accountNumber}")
+    public ApiResponse<Object> selfSearch(@PathVariable String accountNumber, @Valid @RequestBody AccountStatusHistoryUserSearchDTO dto,
                                           @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        return accountStatusHistoryService.selfSearch(id, dto, pageable);
+        return accountStatusHistoryService.selfSearch(accountNumber, dto, pageable);
     }
 
 

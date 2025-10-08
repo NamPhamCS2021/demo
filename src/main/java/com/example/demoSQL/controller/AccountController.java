@@ -14,6 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @SecurityRequirement(name = "Bearer Authentication")
 @RestController
 @RequestMapping("/api/accounts")
@@ -22,22 +24,22 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    @PreAuthorize("@authSecurity.isSelfCustomer(#accountCreateDTO.customerId)")
+    @PreAuthorize("@authSecurity.isSelfCustomer(#accountCreateDTO.customerPublicId)")
     @PostMapping
     public ApiResponse<Object> createAccount(@Valid @RequestBody AccountCreateDTO accountCreateDTO){
         return accountService.createAccount(accountCreateDTO);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
-    @PutMapping("status/{id}")
-    public ApiResponse<Object> updateAccountStatus(@PathVariable Long id, @Valid @RequestBody AccountUpdateStatusDTO accountUpdateStatusDTO){
-        return accountService.updateAccountStatus(id, accountUpdateStatusDTO);
+    @PutMapping("status/{accountNumber}")
+    public ApiResponse<Object> updateAccountStatus(@PathVariable String accountNumber, @Valid @RequestBody AccountUpdateStatusDTO accountUpdateStatusDTO){
+        return accountService.updateAccountStatus(accountNumber, accountUpdateStatusDTO);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
-    @PutMapping("accountlimit/{id}")
-    public ApiResponse<Object> updateAccountLimit(@PathVariable Long id, @Valid @RequestBody AccountUpdateLimitDTO accountUpdateLimitDTO){
-        return accountService.updateAccountLimit(id, accountUpdateLimitDTO);
+    @PutMapping("accountLimit/{accountNumber}")
+    public ApiResponse<Object> updateAccountLimit(@PathVariable String accountNumber, @Valid @RequestBody AccountUpdateLimitDTO accountUpdateLimitDTO){
+        return accountService.updateAccountLimit(accountNumber, accountUpdateLimitDTO);
     }
 
 
@@ -56,36 +58,21 @@ public class AccountController {
 
     @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
     @GetMapping("customer/{customerId}")
-    public ApiResponse<Object> getAccountsByCustomerId(@PathVariable Long customerId,
+    public ApiResponse<Object> getAccountsByCustomerId(@PathVariable UUID customerId,
                                                                        @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
         return accountService.getAccountByCustomerId(customerId, pageable);
-    }
-
-    @PreAuthorize("@authSecurity.isSelfCustomer(#customerId)")
-    @GetMapping("customer/status/{customerId}")
-    public ApiResponse<Object> getAccountsByCustomerIdAndStatus(@PathVariable Long customerId,@RequestParam AccountStatus status,
-                                                                                @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable){
-        return accountService.getAccountsByCustomerIdAndStatus(customerId, status, pageable);
-    }
-
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @GetMapping("status/{status}")
-    public ApiResponse<Object> getAccountsByStatus(
-            @PathVariable AccountStatus status,
-            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC)Pageable pageable) {
-        return accountService.getAccountsByStatus(status, pageable);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping("/search")
     public ApiResponse<Object> searchAccounts(@Valid @RequestBody AccountSearchDTO accountSearchDTO, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable){
-        return accountService.searchAccounts(accountSearchDTO, pageable);
+        return accountService.search(accountSearchDTO, pageable);
     }
 
     @PreAuthorize("@authSecurity.isSelfCustomer(#id)")
     @PostMapping("/search/{id}")
-    public ApiResponse<Object> searchSelfAccount(@PathVariable Long id, @Valid @RequestBody AccountUserSearchDTO dto, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
-        return accountService.searchSelfAccounts(id, dto, pageable);
+    public ApiResponse<Object> searchSelfAccount(@PathVariable UUID id, @Valid @RequestBody AccountUserSearchDTO dto, @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return accountService.selfSearch(id, dto, pageable);
     }
 
     @PreAuthorize("@authSecurity.isOwnerOfAccountByAccountNumber(#accountNumber)")

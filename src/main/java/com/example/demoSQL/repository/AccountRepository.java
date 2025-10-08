@@ -12,13 +12,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long>, JpaSpecificationExecutor<Account> {
 
-    Page<Account> findByCustomerId(Long customerId, Pageable pageable);
+    Page<Account> findByCustomerPublicId(UUID customerId, Pageable pageable);
     Page<Account> findByStatus(AccountStatus status, Pageable pageable);
-    Page<Account> findByCustomerIdAndStatus(Long customerId, AccountStatus status, Pageable pageable);
+    Page<Account> findByCustomerPublicIdAndStatus(UUID customerPublicId, AccountStatus status, Pageable pageable);
     @Query("SELECT Count(a) FROM Account a")
     Long countAllAccounts();
     @Query("SELECT Count(a) FROM Account a WHERE a.status = :status")
